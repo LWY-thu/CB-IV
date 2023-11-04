@@ -1,3 +1,13 @@
+'''
+Author: error: error: git config user.name & please set dead value or install git && error: git config user.email & please set dead value or install git & please set dead value or install git
+Date: 2023-11-01 12:30:07
+LastEditors: error: error: git config user.name & please set dead value or install git && error: git config user.email & please set dead value or install git & please set dead value or install git
+LastEditTime: 2023-11-03 07:56:48
+FilePath: /wyliu/code/CB-IV/module/Regression.py
+Description: 这段代码实现了一个多层感知机（MLP）模型以及相关的训练和评估过程。
+
+Copyright (c) 2023 by ${git_name_email}, All Rights Reserved. 
+'''
 import os
 import random
 import numpy as np
@@ -136,8 +146,8 @@ def run(exp, args, dataDir, resultDir, train, val, test, device):
             loss.backward()        
             optimizer.step()    
 
-        log(logfile, 'The train accuracy: {:.2f} %'.format((sum(train.t.reshape(-1) == torch.max(F.softmax(net(train_input) , dim=1), 1)[1])/len(train.t)).item() * 100))
-        log(_logfile, 'The test  accuracy: {:.2f} %'.format((sum(test.t.reshape(-1) == torch.max(F.softmax(net(test_input) , dim=1), 1)[1])/len(test.t)).item() * 100))
+        log(logfile, 'The train accuracy: {:.2f} %'.format((torch.true_divide(sum(train.t.reshape(-1) == torch.max(F.softmax(net(train_input) , dim=1), 1)[1]), len(train.t))).item() * 100))
+        log(_logfile, 'The test  accuracy: {:.2f} %'.format((torch.true_divide(sum(test.t.reshape(-1) == torch.max(F.softmax(net(test_input) , dim=1), 1)[1]), len(test.t))).item() * 100))
 
     train.s = F.softmax(net(train_input) , dim=1)[:,1:2]
     val.s = F.softmax(net(val_input) , dim=1)[:,1:2]

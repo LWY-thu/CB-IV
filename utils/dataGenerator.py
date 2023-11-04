@@ -8,9 +8,9 @@ from scipy.stats import norm
 
 from utils import * 
 
-class Syn_Generator(object):
+class Syn_Generator(object):   
     def __init__(self, n,ate,sc,sh,one,depX,depU,VX,mV,mX,mU,init_seed=7,seed_coef=10,details=0,storage_path='./Data/'):
-        self.n = n
+        self.n = n # 数据集总量
         self.ate = ate
         self.sc = sc
         self.sh = sh
@@ -18,20 +18,20 @@ class Syn_Generator(object):
         self.depU = depU
         self.one = one
         self.VX = VX
-        self.mV = mV
-        self.mX = mX
-        self.mU = mU
+        self.mV = mV # IV维数
+        self.mX = mX # 可观测到的confounder维数
+        self.mU = mU # unmeasured confounder 维数
         self.seed = init_seed
         self.seed_coef = seed_coef
         self.storage_path = storage_path
 
         assert mV<=mX, 'Assume: the dimension of the IVs is less than Confounders'
         
-        if one:
+        if one: # 如果参数one为True，则系数被设置为全1；
             self.coefs_VXU = np.ones(shape=mV+mX+mU)
             self.coefs_XU0 = np.ones(shape=mX+mU)
             self.coefs_XU1 = np.ones(shape=mX+mU)
-        else:
+        else: # 否则，系数会从正态分布中随机生成。
             np.random.seed(1*seed_coef*init_seed+3)	          # <--
             self.coefs_VXU = np.random.normal(size=mV+mX+mU)
             
@@ -99,10 +99,10 @@ class Syn_Generator(object):
     def run(self, n=None, num_reps=10):
         self.num_reps = num_reps
         
-        mu = self.mu
-        sig = self.sig
-        seed_coef = self.seed_coef
-        init_seed = self.seed
+        mu = self.mu  # 均值向量，表示多元正态分布的均值
+        sig = self.sig # 协方差矩阵，表示多元正态分布的协方差
+        seed_coef = self.seed_coef # 种子系数，用于生成随机种子
+        init_seed = self.seed # 初始随机种子
 
         if n is None:
             n = self.n
@@ -110,6 +110,7 @@ class Syn_Generator(object):
         print('Next, run dataGenerator: ')
 
         for perm in range(num_reps):
+            # 在每次迭代中，调用get_data方法生成训练集、验证集和测试集的数据字典和数据框。
             print(f'Run {perm}/{num_reps}. ')
             train_dict, train_df = self.get_data(n, mu, sig, 3*seed_coef*init_seed+perm+777)
             val_dict, val_df = self.get_data(n, mu, sig, 4*seed_coef*init_seed+perm+777)
@@ -151,7 +152,9 @@ class Syn_Generator(object):
         mX = self.mX
         mU = self.mU
         
+        # 从多元正态分布中生成一个大小为n的随机样本集，其中均值向量为mu，协方差矩阵为sig
         temp = np.random.multivariate_normal(mean=mu, cov=sig, size=n)
+        # 通过切片操作，将生成的样本集分成三个部分：V、X和U。V的列数由mV确定，X的列数由mX确定，U的列数由mU确定。
         V = temp[:, 0:mV]
         X = temp[:, mV:mV+mX]
         U = temp[:, mV+mX:mV+mX+mU]
@@ -162,16 +165,18 @@ class Syn_Generator(object):
             T_vars = np.concatenate([V,X,U], axis=1)
         Y_vars = np.concatenate([X,U], axis=1)
         
+        # 生成Treatment
         np.random.seed(2*seed)	                # <--------------
         z = np.dot(T_vars, self.coefs_VXU)
         pi0_t1 = scipy.special.expit( self.sc*(z+self.sh) )
         t = np.array([])
         for p in pi0_t1:
             t = np.append(t, np.random.binomial(1, p, 1))
-            
+
+        # 计算ATE    
         mu_0 = np.dot(Y_vars**1, self.coefs_XU0) / (mX+mU)
         mu_1 = np.dot(Y_vars**2, self.coefs_XU1) / (mX+mU) + self.ate
-        
+        # 生成y
         np.random.seed(3*seed)	                # <--------------
         y = np.zeros((n, 2))
         y[:,0] = mu_0 + np.random.normal(loc=0., scale=.01, size=n)
@@ -182,7 +187,12 @@ class Syn_Generator(object):
         for i, t_i in enumerate(t):
             yf = np.append(yf, y[i, int(t_i)])
             ycf = np.append(ycf, y[i, int(1-t_i)])
-            
+        
+        # V:工具变量 X:Observed confounder U:Unmeasured confounder
+        # z, pi: pi=P(T|Z,X)=1/1+exp(z) t:Treatment 
+        # mu0:对照组的平均因果响应（Average Treatment Effect for Control Group），表示对照组在未接受处理时的平均因果影响。它是一个常数。
+        # mu1:处理组的平均因果响应（Average Treatment Effect for Treated Group），表示处理组在接受处理时的平均因果影响。它是一个常数。
+        #yf:Factual Outcome ycf:Counterfactual Outcome y:实际观测到的结果变量
         data_dict = {'V':V, 'X':X, 'U':U, 'z':z, 'pi':pi0_t1, 't':t, 'mu0':mu_0, 'mu1':mu_1, 'yf':yf, 'y':y, 'ycf':ycf}
         data_all = np.concatenate([V, X, U, z.reshape(-1,1), pi0_t1.reshape(-1,1), t.reshape(-1,1), mu_0.reshape(-1,1), mu_1.reshape(-1,1), yf.reshape(-1,1), ycf.reshape(-1,1)], axis=1)
         data_df = pd.DataFrame(data_all,

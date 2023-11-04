@@ -60,6 +60,7 @@ def get_FLAGS():
     tf.app.flags.DEFINE_boolean('reweight_sample', 1, """Whether to reweight sample for prediction loss with average treatment probability. """)
     tf.app.flags.DEFINE_boolean('twoStage', 1, """twoStage. """)
     tf.app.flags.DEFINE_string('f', '', 'kernel')
+    tf.app.flags.DEFINE_string('ip', '', 'kernel')
 
     if FLAGS.sparse:
         import scipy.sparse as sparse
