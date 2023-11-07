@@ -1,22 +1,22 @@
 '''
 Author: error: error: git config user.name & please set dead value or install git && error: git config user.email & please set dead value or install git & please set dead value or install git
 Date: 2023-11-03 10:09:47
-LastEditors: error: error: git config user.name & please set dead value or install git && error: git config user.email & please set dead value or install git & please set dead value or install git
-LastEditTime: 2023-11-03 14:08:08
+LastEditors: lwy_thu 760835659@qq.com
+LastEditTime: 2023-11-06 12:48:02
 FilePath: /wyliu/code/CB-IV/run/synCBIV.py
 Description: 
 
 Copyright (c) 2023 by ${git_name_email}, All Rights Reserved. 
 '''
-from sys import path
-path.append(r"../")
+import sys
 
 import os
 import argparse
 import pandas as pd
 import numpy as np
 import torch
-
+sys.path.append(r"../")
+sys.path.append('/home/wyliu/code/CB-IV')
 from utils import log, CausalDataset
 from module.SynCBIV import run as run_SynCBIV
 
@@ -77,12 +77,12 @@ results = []
 alpha = args.syn_alpha
 for exp in range(args.num_reps):
     # load data
-    train_df = pd.read_csv(dataDir + f'{exp}/train.csv')
-    val_df = pd.read_csv(dataDir + f'{exp}/val.csv')
-    test_df = pd.read_csv(dataDir + f'{exp}/test.csv')
-    # train_df = pd.read_csv(dataDir + f'{exp}/{args.mode}/train.csv')
-    # val_df = pd.read_csv(dataDir + f'{exp}/{args.mode}/val.csv')
-    # test_df = pd.read_csv(dataDir + f'{exp}/{args.mode}/test.csv')
+    # train_df = pd.read_csv(dataDir + f'{exp}/train.csv')
+    # val_df = pd.read_csv(dataDir + f'{exp}/val.csv')
+    # test_df = pd.read_csv(dataDir + f'{exp}/test.csv')
+    train_df = pd.read_csv(dataDir + f'{exp}/{args.mode}/train.csv')
+    val_df = pd.read_csv(dataDir + f'{exp}/{args.mode}/val.csv')
+    test_df = pd.read_csv(dataDir + f'{exp}/{args.mode}/test.csv')
 
     train = CausalDataset(train_df, variables = ['u','x','v','z','p','s','m','t','g','y','f','c'])
     val = CausalDataset(val_df, variables = ['u','x','v','z','p','s','m','t','g','y','f','c'])

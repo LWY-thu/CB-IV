@@ -1,0 +1,60 @@
+Exp 0 :this is the 0/3 epochs.
+The train accuracy: 67.75 %
+Exp 0 :this is the 1/3 epochs.
+The train accuracy: 69.38 %
+Exp 0 :this is the 2/3 epochs.
+The train accuracy: 70.16 %
+Exp 1 :this is the 0/3 epochs.
+The train accuracy: 67.54 %
+Exp 1 :this is the 1/3 epochs.
+The train accuracy: 68.53 %
+Exp 1 :this is the 2/3 epochs.
+The train accuracy: 69.65 %
+Exp 2 :this is the 0/3 epochs.
+The train accuracy: 66.34 %
+Exp 2 :this is the 1/3 epochs.
+The train accuracy: 68.68 %
+Exp 2 :this is the 2/3 epochs.
+The train accuracy: 70.37 %
+Exp 3 :this is the 0/3 epochs.
+The train accuracy: 67.21 %
+Exp 3 :this is the 1/3 epochs.
+The train accuracy: 68.29 %
+Exp 3 :this is the 2/3 epochs.
+The train accuracy: 69.74 %
+Exp 4 :this is the 0/3 epochs.
+The train accuracy: 68.53 %
+Exp 4 :this is the 1/3 epochs.
+The train accuracy: 69.89 %
+Exp 4 :this is the 2/3 epochs.
+The train accuracy: 70.40 %
+Exp 5 :this is the 0/3 epochs.
+The train accuracy: 67.96 %
+Exp 5 :this is the 1/3 epochs.
+The train accuracy: 69.35 %
+Exp 5 :this is the 2/3 epochs.
+The train accuracy: 70.07 %
+Exp 6 :this is the 0/3 epochs.
+The train accuracy: 66.91 %
+Exp 6 :this is the 1/3 epochs.
+The train accuracy: 68.23 %
+Exp 6 :this is the 2/3 epochs.
+The train accuracy: 69.65 %
+Exp 7 :this is the 0/3 epochs.
+The train accuracy: 67.81 %
+Exp 7 :this is the 1/3 epochs.
+The train accuracy: 68.99 %
+Exp 7 :this is the 2/3 epochs.
+The train accuracy: 69.62 %
+Exp 8 :this is the 0/3 epochs.
+The train accuracy: 66.79 %
+Exp 8 :this is the 1/3 epochs.
+The train accuracy: 68.11 %
+Exp 8 :this is the 2/3 epochs.
+The train accuracy: 68.80 %
+Exp 9 :this is the 0/3 epochs.
+The train accuracy: 68.41 %
+Exp 9 :this is the 1/3 epochs.
+The train accuracy: 69.14 %
+Exp 9 :this is the 2/3 epochs.
+The train accuracy: 69.83 %

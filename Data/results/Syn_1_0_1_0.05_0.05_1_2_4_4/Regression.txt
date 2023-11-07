@@ -1,11 +1,4 @@
 Exp 0 :this is the 0/3 epochs.
-Exp 0 :this is the 0/3 epochs.
-Exp 0 :this is the 0/3 epochs.
-Exp 0 :this is the 0/3 epochs.
-Exp 0 :this is the 0/3 epochs.
-Exp 0 :this is the 0/3 epochs.
-Exp 0 :this is the 0/3 epochs.
-Exp 0 :this is the 0/3 epochs.
 The test  accuracy: 74.65 %
 Exp 0 :this is the 1/3 epochs.
 The test  accuracy: 75.01 %
@@ -185,3 +178,63 @@ Exp 9 :this is the 1/3 epochs.
 The test  accuracy: 71.61 %
 Exp 9 :this is the 2/3 epochs.
 The test  accuracy: 71.64 %
+Exp 0 :this is the 0/3 epochs.
+The test  accuracy: 74.65 %
+Exp 0 :this is the 1/3 epochs.
+The test  accuracy: 75.01 %
+Exp 0 :this is the 2/3 epochs.
+The test  accuracy: 74.99 %
+Exp 1 :this is the 0/3 epochs.
+The test  accuracy: 74.16 %
+Exp 1 :this is the 1/3 epochs.
+The test  accuracy: 74.37 %
+Exp 1 :this is the 2/3 epochs.
+The test  accuracy: 74.55 %
+Exp 2 :this is the 0/3 epochs.
+The test  accuracy: 74.15 %
+Exp 2 :this is the 1/3 epochs.
+The test  accuracy: 74.55 %
+Exp 2 :this is the 2/3 epochs.
+The test  accuracy: 74.47 %
+Exp 3 :this is the 0/3 epochs.
+The test  accuracy: 75.37 %
+Exp 3 :this is the 1/3 epochs.
+The test  accuracy: 75.77 %
+Exp 3 :this is the 2/3 epochs.
+The test  accuracy: 75.58 %
+Exp 4 :this is the 0/3 epochs.
+The test  accuracy: 73.44 %
+Exp 4 :this is the 1/3 epochs.
+The test  accuracy: 73.76 %
+Exp 4 :this is the 2/3 epochs.
+The test  accuracy: 73.85 %
+Exp 5 :this is the 0/3 epochs.
+The test  accuracy: 73.93 %
+Exp 5 :this is the 1/3 epochs.
+The test  accuracy: 74.47 %
+Exp 5 :this is the 2/3 epochs.
+The test  accuracy: 74.70 %
+Exp 6 :this is the 0/3 epochs.
+The test  accuracy: 73.55 %
+Exp 6 :this is the 1/3 epochs.
+The test  accuracy: 74.06 %
+Exp 6 :this is the 2/3 epochs.
+The test  accuracy: 74.30 %
+Exp 7 :this is the 0/3 epochs.
+The test  accuracy: 73.93 %
+Exp 7 :this is the 1/3 epochs.
+The test  accuracy: 74.39 %
+Exp 7 :this is the 2/3 epochs.
+The test  accuracy: 74.46 %
+Exp 8 :this is the 0/3 epochs.
+The test  accuracy: 73.75 %
+Exp 8 :this is the 1/3 epochs.
+The test  accuracy: 74.11 %
+Exp 8 :this is the 2/3 epochs.
+The test  accuracy: 74.20 %
+Exp 9 :this is the 0/3 epochs.
+The test  accuracy: 74.26 %
+Exp 9 :this is the 1/3 epochs.
+The test  accuracy: 74.76 %
+Exp 9 :this is the 2/3 epochs.
+The test  accuracy: 74.81 %
