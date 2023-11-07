@@ -545,7 +545,7 @@ def run(exp, args, dataDir, resultDir, train, val, test, device):
         opt = tf.train.RMSPropOptimizer(lr, FLAGS.decay)
 
     train_step = opt.minimize(Net.tot_loss,global_step=global_step)
-
+    print("1213")
     mse_val, obj_val, final = trainNet(Net, sess, train_step, train, val, test, FLAGS, logfile, _logfile, exp)
     
     return mse_val, obj_val, final
