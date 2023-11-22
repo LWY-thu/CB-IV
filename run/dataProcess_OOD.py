@@ -45,12 +45,12 @@ def run(args):
                                  seed_coef=10,
                                  details=1,
                                  storage_path=args.storage_path)
-    # Syn_2442.run(n=args.ood_num, num_reps=args.num_reps)
+    Syn_2442.run(n=args.ood_num, num_reps=args.num_reps)
 
     Datasets = [Syn_2442]
 
     # run vx
-    for mode in ['vx']:
+    for mode in ['x', 'vx']:
         data = Datasets[0]
         which_benchmark = data.which_benchmark
         which_dataset = data.which_dataset

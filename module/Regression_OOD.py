@@ -4,7 +4,7 @@ Date: 2023-11-01 12:30:07
 LastEditors: error: error: git config user.name & please set dead value or install git && error: git config user.email & please set dead value or install git & please set dead value or install git
 LastEditTime: 2023-11-03 07:56:48
 FilePath: /wyliu/code/CB-IV/module/Regression.py
-Description: 这段代码实现了一个多层感知机（MLP）模型以及相关的训练和评估过程。
+Description: 这段代码实现了一个多层感知机MLP模型以及相关的训练和评估过程。
 
 Copyright (c) 2023 by ${git_name_email}, All Rights Reserved. 
 '''
@@ -31,11 +31,19 @@ def get_gain(activation):
             gain = 1.0
     return gain
 
+# input_dim：输入数据的维度。
+# layer_widths：一个整数列表，表示隐藏层的宽度。
+# activation：激活函数（默认为 None）。
+# last_layer：可选的最后一层，可以是任何 nn.Module 的子类（默认为 None）。
+# num_out：输出的维度（默认为 1）。
 class MLPModel(nn.Module):
     def __init__(self, input_dim, layer_widths, activation=None,last_layer=None, num_out=1):
         nn.Module.__init__(self)
         self.gain=get_gain(activation)
-
+        # 根据隐藏层的宽度列表 layer_widths，
+        # 创建一系列的线性层（nn.Linear），
+        # 并可选择地在每个线性层之后添加给定的激活函数 activation。
+        # 最后，根据输出维度 num_out 添加最后一层线性层。
         if len(layer_widths) == 0:
             layers = [nn.Linear(input_dim, num_out)]
         else:
@@ -57,6 +65,7 @@ class MLPModel(nn.Module):
         self.model = nn.Sequential(*layers)
 
     def initialize(self, gain=1.0):
+        # initialize 方法用于初始化模型的参数。
         for layer in self.model[:-1]:
             if isinstance(layer, nn.Linear):
                 nn.init.xavier_normal_(layer.weight.data, gain=self.gain)
