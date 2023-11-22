@@ -8,6 +8,7 @@ except:
 from utils import set_seed, log, set_tf_seed
 from utils.imbFun import *
 from utils.dataUtils import *
+from utils import log, CausalDataset
 
 def get_FLAGS():
     ''' Define parameter flags '''
@@ -65,6 +66,7 @@ def get_FLAGS():
     tf.app.flags.DEFINE_integer('mV', 2, """The dim of Instrumental variables V.""")
     tf.app.flags.DEFINE_integer('mX', 4, """The dim of Confounding variables X.""")
     tf.app.flags.DEFINE_integer('mU', 4, """The dim of Unobserved confounding variables U.""")
+    tf.app.flags.DEFINE_float('ood', 0., """ood. """)
 
     if FLAGS.sparse:
         import scipy.sparse as sparse
@@ -157,21 +159,26 @@ class CBIV(object):
             if i==0:
                 ''' If using variable selection, first layer is just rescaling'''
                 if FLAGS.varsel:
+                    # 如果是第一层且使用了变量选择（FLAGS.varsel 为真），则将该层的权重设置为一个维度为 dim_input 的常量张量。
                     weights_in.append(tf.Variable(1.0/dim_input*tf.ones([dim_input])))
                 else:
+                    # 否则，对于其他层，将权重初始化为维度为 (dim_in, dim_in) 的随机正态分布张量。
                     weights_in.append(tf.Variable(tf.random_normal([dim_input, dim_in], stddev=FLAGS.weight_init/np.sqrt(dim_input))))
             else:
+                # 对于每一层，如果不是第一层或者不使用变量选择，还会构建一个偏置项。
                 weights_in.append(tf.Variable(tf.random_normal([dim_in,dim_in], stddev=FLAGS.weight_init/np.sqrt(dim_in))))
 
             ''' If using variable selection, first layer is just rescaling'''
-            if FLAGS.varsel and i==0:
+            if FLAGS.varsel and i==0: #如果是第一层且使用了变量选择（FLAGS.varsel 为真），则将该层的权重设置为一个维度为 dim_input 的常量张量。
                 biases_in.append([])
                 h_in.append(tf.mul(h_in[i],weights_in[i]))
             else:
+                #将输入数据 h_in[i] 与权重 weights_in[i] 相乘，然后加上偏置 biases_in[i]，得到 z。
                 biases_in.append(tf.Variable(tf.zeros([1,dim_in])))
                 z = tf.matmul(h_in[i], weights_in[i]) + biases_in[i]
 
                 if FLAGS.batch_norm:
+                    # 如果启用了批量归一化（FLAGS.batch_norm 为真），则进行归一化操作。
                     batch_mean, batch_var = tf.nn.moments(z, [0])
 
                     if FLAGS.normalization == 'bn_fixed':
@@ -180,12 +187,17 @@ class CBIV(object):
                         bn_biases.append(tf.Variable(tf.zeros([dim_in])))
                         bn_scales.append(tf.Variable(tf.ones([dim_in])))
                         z = tf.nn.batch_normalization(z, batch_mean, batch_var, bn_biases[-1], bn_scales[-1], 1e-3)
-
+                # 将经过激活函数 self.nonlin() 处理后的结果存储在 h_in 列表中的下一个位置，表示下一层的输出。
+                # 对于每一层的输出，还应用了 dropout 操作，通过 tf.nn.dropout() 函数将其与 do_in 相乘。
                 h_in.append(self.nonlin(z))
                 h_in[i+1] = tf.nn.dropout(h_in[i+1], do_in)
 
+        # 最后，将最后一层的输出 h_in[len(h_in)-1] 存储在 h_rep 变量中，表示表示层的输出。
         h_rep = h_in[len(h_in)-1]
 
+        # 根据指定的归一化方式，计算了表示层输出的归一化版本 h_rep_norm。
+        # 如果 FLAGS.normalization 的值是 'divide'，则 h_rep_norm 等于 h_rep 除以对 h_rep 按行平方求和后开根号的结果；
+        # 否则，h_rep_norm 等于 h_rep 的一个副本。
         if FLAGS.normalization == 'divide':
             h_rep_norm = h_rep / safe_sqrt(tf.reduce_sum(tf.square(h_rep), axis=1, keep_dims=True))
         else:
@@ -346,7 +358,7 @@ class CBIV(object):
 
         return y, y0, y1, weights_out, weights_pred, weights_out0, weights_pred0, weights_out1, weights_pred1
 
-def trainNet(Net, sess, train_step, train_data, val_data, test_data, FLAGS, logfile, _logfile, exp):
+def trainNet(Net, sess, train_step, train_data, val_data, test_data, FLAGS, logfile, _logfile, exp, dataDir, args):
     n_train = len(train_data['x'])
     p_treated = np.mean(train_data['t'])
 
@@ -379,6 +391,8 @@ def trainNet(Net, sess, train_step, train_data, val_data, test_data, FLAGS, logf
             'hat_yf_train': None, 'hat_ycf_train': None, 'hat_mu0_train': None, 'hat_mu1_train': None , 
             'hat_yf_test': None, 'hat_ycf_test': None, 'hat_mu0_test': None, 'hat_mu1_test': None }
 
+    ood_ate_test = []
+    ood_pehe_test = []
     ''' Train for multiple iterations '''
     for i in range(FLAGS.iterations):
         ''' Fetch sample '''
@@ -450,8 +464,28 @@ def trainNet(Net, sess, train_step, train_data, val_data, test_data, FLAGS, logf
                     % (obj_loss, f_error, cf_error, imb_err, valid_f_error, valid_imb, valid_obj, final['ate_train'], final['ate_test'], final['pehe_train'], final['pehe_test'])
             log(logfile, loss_str)
             log(_logfile, loss_str, False)
+
+        if i==FLAGS.iterations-1:
+            ''' bias rate '''
+            br = [-3.0, -2.5, -2.0, -1.5, -1.3, 1.3, 1.5, 2.0, 2.5, 3.0, 0.0]
+            brdc = {-3.0: 'n30', -2.5:'n25', -2.0:'n20', -1.5:'n15', -1.3:'n13', 1.3:'p13', 1.5:'p15', 2.0:'p20', 2.5:'p25', 3.0:'p30', 0.0:'0'}
+            for r in br:
+                test_df = pd.read_csv(dataDir + f'{exp}/{args.mode}/ood_{brdc[r]}/test.csv')
+                test = CausalDataset(test_df, variables = ['u','x','v','xs','z','p','s','m','t','g','y','f','c'], observe_vars=['v','x','xs'])
+                test = {'x':np.concatenate((test.x, test.xs), 1),
+                        't':test.t,
+                        's':test.s,
+                        'g':test.g,
+                        'yf':test.y,
+                        'ycf':test.f}
+                y_pred_f_test = sess.run(Net.output, feed_dict={Net.x: test['x'], Net.s: test['s'], Net.t: test['t'], Net.do_in: 1.0, Net.do_out: 1.0})
+                y_pred_cf_test = sess.run(Net.output, feed_dict={Net.x: test['x'], Net.s: 1-test['s'], Net.t: 1-test['t'], Net.do_in: 1.0, Net.do_out: 1.0})
+                y_pred_mu0_test = sess.run(Net.output, feed_dict={Net.x: test['x'], Net.s: test['s']-test['s'], Net.t: test['t']-test['t'], Net.do_in: 1.0, Net.do_out: 1.0})
+                y_pred_mu1_test = sess.run(Net.output, feed_dict={Net.x: test['x'], Net.s: 1-test['s']+test['s'], Net.t: 1-test['t']+test['t'], Net.do_in: 1.0, Net.do_out: 1.0})
+                ood_ate_test.append(np.mean(y_pred_mu1_test) - np.mean(y_pred_mu0_test))
+                ood_pehe_test.append(pehe(ypred1=y_pred_f_test, ypred0=y_pred_cf_test, mu1=y_pred_mu1_test, mu0=y_pred_mu0_test))
         
-    return mse_val, obj_val, final
+    return mse_val, obj_val, final, ood_ate_test, ood_pehe_test
 
 def run(exp, args, dataDir, resultDir, train, val, test, device):
 
@@ -493,7 +527,9 @@ def run(exp, args, dataDir, resultDir, train, val, test, device):
                 np.concatenate((val.v, val.x), 1), 
                 np.concatenate((test.v, test.x), 1)]
     else:
-        x_list = [train.x, val.x, test.x]
+        x_list = [np.concatenate((train.x, train.xs), 1), 
+                np.concatenate((val.x, val.xs), 1), 
+                np.concatenate((test.x, test.xs), 1)]
 
     train = {'x':x_list[0],
             't':train.t,
@@ -556,6 +592,6 @@ def run(exp, args, dataDir, resultDir, train, val, test, device):
 
     train_step = opt.minimize(Net.tot_loss,global_step=global_step)
     
-    mse_val, obj_val, final = trainNet(Net, sess, train_step, train, val, test, FLAGS, logfile, _logfile, exp)
+    mse_val, obj_val, final, ood_ate_test, ood_pehe_test = trainNet(Net, sess, train_step, train, val, test, FLAGS, logfile, _logfile, exp, dataDir, args)
     
-    return mse_val, obj_val, final
+    return mse_val, obj_val, final, ood_ate_test, ood_pehe_test

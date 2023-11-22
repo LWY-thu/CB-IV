@@ -1,11 +1,28 @@
+'''
+Author: lwy_thu 760835659@qq.com
+Date: 2023-11-01 12:30:07
+LastEditors: lwy_thu 760835659@qq.com
+LastEditTime: 2023-11-17 08:46:47
+FilePath: /wyliu/code/CB-IV/utils/loadDataset.py
+Description: 
+
+Copyright (c) 2023 by ${git_name_email}, All Rights Reserved. 
+'''
 import pandas as pd
 import numpy as np
 import torch
 from scipy.stats import norm
 from torch.utils.data import Dataset, DataLoader
 
-def get_var_df(df,var):
-    var_cols = [c for c in df.columns if c.startswith(var)]
+# def get_var_df(df,var):
+#     var_cols = [c for c in df.columns if c.startswith(var)]
+#     return df[var_cols].to_numpy()
+
+def get_var_df(df, var):
+    if var == 'x':
+        var_cols = [c for c in df.columns if c.startswith(var) and not c.startswith('xs') ]
+    else:
+        var_cols = [c for c in df.columns if c.startswith(var)] 
     return df[var_cols].to_numpy()
         
 class CausalDataset(Dataset):

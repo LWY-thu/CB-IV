@@ -8,8 +8,8 @@ from scipy.stats import norm
 
 from utils import * 
 
-class Syn_Generator(object):   
-    def __init__(self, n,ate,sc,sh,one,depX,depU,VX,mV,mX,mU,init_seed=7,seed_coef=10,details=0,storage_path='./Data/'):
+class Syn_Generator_OOD(object):   
+    def __init__(self, n,ate,sc,sh,one,depX,depU,VX,mV,mX,mU,mXs,init_seed=7,seed_coef=10,details=0,storage_path='./Data/'):
         self.n = n # 数据集总量
         self.ate = ate
         self.sc = sc
@@ -19,8 +19,9 @@ class Syn_Generator(object):
         self.one = one
         self.VX = VX
         self.mV = mV # IV维数
-        self.mX = mX # 可观测到的confounder维数
+        self.mX = mX # 可观测到的confounder维数,invariant feature
         self.mU = mU # unmeasured confounder 维数
+        self.mXs = mXs # spurious feature
         self.seed = init_seed
         self.seed_coef = seed_coef
         self.storage_path = storage_path
@@ -78,10 +79,11 @@ class Syn_Generator(object):
         self.sig = sig
             
     def set_path(self,details):
-        which_benchmark = 'Syn_'+'_'.join(str(item) for item in [self.sc, self.sh, self.one, self.depX, self.depU,self.VX])
+        which_benchmark = 'SynOOD_'+'_'.join(str(item) for item in [self.sc, self.sh, self.one, self.depX, self.depU,self.VX])
+        print(which_benchmark)
         data_path = self.storage_path+'/data/'+which_benchmark
         os.makedirs(os.path.dirname(data_path), exist_ok=True)
-        which_dataset = '_'.join(str(item) for item in [self.mV, self.mX, self.mU])
+        which_dataset = '_'.join(str(item) for item in [self.mV, self.mX, self.mU, self.mXs])
         data_path += '/'+which_dataset+'/'
         os.makedirs(os.path.dirname(data_path), exist_ok=True)
         self.data_path = data_path
@@ -118,7 +120,6 @@ class Syn_Generator(object):
             all_df = train_df.append([val_df, test_df])
 
             data_path = self.data_path + '/{}/'.format(perm)
-            print(data_path)
             os.makedirs(os.path.dirname(data_path), exist_ok=True)
             os.makedirs(os.path.dirname(data_path+'info/'), exist_ok=True)
         
@@ -152,6 +153,7 @@ class Syn_Generator(object):
         mV = self.mV
         mX = self.mX
         mU = self.mU
+        mXs = self.mXs
         
         # 从多元正态分布中生成一个大小为n的随机样本集，其中均值向量为mu，协方差矩阵为sig
         temp = np.random.multivariate_normal(mean=mu, cov=sig, size=n)
@@ -159,6 +161,7 @@ class Syn_Generator(object):
         V = temp[:, 0:mV]
         X = temp[:, mV:mV+mX]
         U = temp[:, mV+mX:mV+mX+mU]
+        Xs = temp[:, mV+mX+mXs:mV+mX+mU+mXs]
 
         if self.VX:
             T_vars = np.concatenate([V * X[:, 0:mV],X,U], axis=1)
@@ -189,17 +192,18 @@ class Syn_Generator(object):
             yf = np.append(yf, y[i, int(t_i)])
             ycf = np.append(ycf, y[i, int(1-t_i)])
         
-        # V:工具变量 X:Observed confounder U:Unmeasured confounder
+        # V:工具变量 X:Observed confounder U:Unmeasured confounder Xs:spurious feature
         # z, pi: pi=P(T|Z,X)=1/1+exp(z) t:Treatment 
         # mu0:对照组的平均因果响应（Average Treatment Effect for Control Group），表示对照组在未接受处理时的平均因果影响。它是一个常数。
         # mu1:处理组的平均因果响应（Average Treatment Effect for Treated Group），表示处理组在接受处理时的平均因果影响。它是一个常数。
         #yf:Factual Outcome ycf:Counterfactual Outcome y:实际观测到的结果变量
-        data_dict = {'V':V, 'X':X, 'U':U, 'z':z, 'pi':pi0_t1, 't':t, 'mu0':mu_0, 'mu1':mu_1, 'yf':yf, 'y':y, 'ycf':ycf}
-        data_all = np.concatenate([V, X, U, z.reshape(-1,1), pi0_t1.reshape(-1,1), t.reshape(-1,1), mu_0.reshape(-1,1), mu_1.reshape(-1,1), yf.reshape(-1,1), ycf.reshape(-1,1)], axis=1)
+        data_dict = {'V':V, 'U':U, 'X':X, 'Xs':Xs,'z':z, 'pi':pi0_t1, 't':t, 'mu0':mu_0, 'mu1':mu_1, 'yf':yf, 'y':y, 'ycf':ycf}
+        data_all = np.concatenate([V, X, U, Xs, z.reshape(-1,1), pi0_t1.reshape(-1,1), t.reshape(-1,1), mu_0.reshape(-1,1), mu_1.reshape(-1,1), yf.reshape(-1,1), ycf.reshape(-1,1)], axis=1)
         data_df = pd.DataFrame(data_all,
                                columns=['v{}'.format(i+1) for i in range(V.shape[1])] + 
                                ['x{}'.format(i+1) for i in range(X.shape[1])] + 
                                ['u{}'.format(i+1) for i in range(U.shape[1])] + 
+                               ['xs{}'.format(i+1) for i in range(Xs.shape[1])] + 
                                ['z','pi','t','mu0','mu1','y','f'])
         
         return data_dict, data_df

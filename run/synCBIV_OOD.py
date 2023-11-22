@@ -18,7 +18,8 @@ import torch
 sys.path.append(r"../")
 sys.path.append('/home/wyliu/code/CB-IV')
 from utils import log, CausalDataset
-from module.SynCBIV import run as run_SynCBIV
+# from module.SynCBIV import run as run_SynCBIV
+from module.SynCBIV_OOD import run as run_SynCBIV
 
 os.environ["CUDA_VISIBLE_DEVICES"] = '1'
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
@@ -65,9 +66,12 @@ def run(args):
     else:
         device = torch.device('cpu')
     # set path
-    which_benchmark = 'Syn_'+'_'.join(str(item) for item in [args.sc, args.sh, args.one, args.depX, args.depU,args.VX])
-    which_dataset = '_'.join(str(item) for item in [args.mV, args.mX, args.mU])
-    resultDir = args.storage_path + f'/results/{which_benchmark}_{which_dataset}/'
+    ''' bias rate '''
+    br = [-3.0, -2.5, -2.0, -1.5, -1.3, 1.3, 1.5, 2.0, 2.5, 3.0, 0.0]
+    brdc = {-3.0: 'n30', -2.5:'n25', -2.0:'n20', -1.5:'n15', -1.3:'n13', 1.3:'p13', 1.5:'p15', 2.0:'p20', 2.5:'p25', 3.0:'p30', 0.0:'0'}
+    which_benchmark = 'SynOOD_'+'_'.join(str(item) for item in [args.sc, args.sh, args.one, args.depX, args.depU,args.VX])
+    which_dataset = '_'.join(str(item) for item in [args.mV, args.mX, args.mU, args.mD])
+    resultDir = args.storage_path + f'/results/{which_benchmark}_{which_dataset}_ood{brdc[args.ood]}/'
     dataDir = f'{args.storage_path}/data/{which_benchmark}/{which_dataset}/'
     os.makedirs(os.path.dirname(resultDir), exist_ok=True)
     logfile = f'{resultDir}/log.txt'
@@ -78,56 +82,102 @@ def run(args):
 
     results_ate = []
     results_pehe = []
+    results_ood_ate_direct = []
+    results_ood_pehe_direct = []
+    results_ood_ate_cfr = []
+    results_ood_pehe_cfr = []
+    results_ood_ate_twostage = []
+    results_ood_pehe_twostage = []
+    results_ood_ate_cbiv = []
+    results_ood_pehe_cbiv = []
+    results_ood = [results_ood_ate_direct, results_ood_pehe_direct,
+                   results_ood_ate_cfr, results_ood_pehe_cfr,
+                   results_ood_ate_twostage, results_ood_pehe_twostage,
+                   results_ood_ate_cbiv, results_ood_pehe_cbiv]
+    name_ood = ["results_ood_ate_direct", "results_ood_pehe_direct",
+                   "results_ood_ate_cfr", "results_ood_pehe_cfr",
+                   "results_ood_ate_twostage", "results_ood_pehe_twostage",
+                   "results_ood_ate_cbiv", "results_ood_pehe_cbiv"]
     alpha = args.syn_alpha
     for exp in range(args.num_reps):
         # load data
         # train_df = pd.read_csv(dataDir + f'{exp}/train.csv')
         # val_df = pd.read_csv(dataDir + f'{exp}/val.csv')
         # test_df = pd.read_csv(dataDir + f'{exp}/test.csv')
-        train_df = pd.read_csv(dataDir + f'{exp}/{args.mode}/train.csv')
-        val_df = pd.read_csv(dataDir + f'{exp}/{args.mode}/val.csv')
-        test_df = pd.read_csv(dataDir + f'{exp}/{args.mode}/test.csv')
+        print(dataDir + f'{exp}/{args.mode}/ood_{brdc[args.ood]}/train.csv')
+        train_df = pd.read_csv(dataDir + f'{exp}/{args.mode}/ood_{brdc[args.ood]}/train.csv')
+        val_df = pd.read_csv(dataDir + f'{exp}/{args.mode}/ood_{brdc[args.ood]}/val.csv')
+        test_df = pd.read_csv(dataDir + f'{exp}/{args.mode}/ood_{brdc[args.ood]}/test.csv')
 
-        train = CausalDataset(train_df, variables = ['u','x','v','z','p','s','m','t','g','y','f','c'])
-        val = CausalDataset(val_df, variables = ['u','x','v','z','p','s','m','t','g','y','f','c'])
-        test = CausalDataset(test_df, variables = ['u','x','v','z','p','s','m','t','g','y','f','c'])
+        train = CausalDataset(train_df, variables = ['u','x','v','xs','z','p','s','m','t','g','y','f','c'], observe_vars=['v','x','xs'])
+        val = CausalDataset(val_df, variables = ['u','x','v','xs','z','p','s','m','t','g','y','f','c'], observe_vars=['v','x','xs'])
+        test = CausalDataset(test_df, variables = ['u','x','v','xs','z','p','s','m','t','g','y','f','c'], observe_vars=['v','x','xs'])
 
         res_ate_list = []
         res_pehe_list = []
+        ood_ate = []
+        ood_pehe = []
         
         args.syn_twoStage = False
         args.syn_alpha = 0
-        mse_val, obj_val, final = run_SynCBIV(exp, args, dataDir, resultDir, train, val, test, device)
+        mse_val, obj_val, final, ood_ate_test, ood_pehe_test = run_SynCBIV(exp, args, dataDir, resultDir, train, val, test, device)
         res_ate_list = res_ate_list + [obj_val['ate_train'],obj_val['ate_test']]
         res_pehe_list = res_pehe_list + [obj_val['pehe_train'],obj_val['pehe_test']]
+        # ood_ate_test = np.array(ood_ate_test) - 1.0
+        # ood_pehe_test = np.array(ood_pehe_test) - 1.0
+        results_ood_ate_direct.append(ood_ate_test)
+        results_ood_pehe_direct.append(ood_pehe_test)
+
         
         args.syn_twoStage = False
         args.syn_alpha = alpha
-        mse_val, obj_val, final = run_SynCBIV(exp, args, dataDir, resultDir, train, val, test, device)
+        mse_val, obj_val, final, ood_ate_test, ood_pehe_test = run_SynCBIV(exp, args, dataDir, resultDir, train, val, test, device)
         res_ate_list = res_ate_list + [obj_val['ate_train'],obj_val['ate_test']]
         res_pehe_list = res_pehe_list + [obj_val['pehe_train'],obj_val['pehe_test']]
+        # ood_ate_test = np.array(ood_ate_test) - 1.0
+        # ood_pehe_test = np.array(ood_pehe_test) - 1.0
+        results_ood_ate_cfr.append(ood_ate_test)
+        results_ood_pehe_cfr.append(ood_pehe_test)
         
         args.syn_twoStage = True
         args.syn_alpha = 0
-        mse_val, obj_val, final = run_SynCBIV(exp, args, dataDir, resultDir, train, val, test, device)
+        mse_val, obj_val, final, ood_ate_test, ood_pehe_test = run_SynCBIV(exp, args, dataDir, resultDir, train, val, test, device)
         res_ate_list = res_ate_list + [obj_val['ate_train'],obj_val['ate_test']]
         res_pehe_list = res_pehe_list + [obj_val['pehe_train'],obj_val['pehe_test']]
+        # ood_ate_test = np.array(ood_ate_test) - 1.0
+        # ood_pehe_test = np.array(ood_pehe_test) - 1.0
+        results_ood_ate_twostage.append(ood_ate_test)
+        results_ood_pehe_twostage.append(ood_pehe_test)
         
         args.syn_twoStage = True
         args.syn_alpha = alpha
-        mse_val, obj_val, final = run_SynCBIV(exp, args, dataDir, resultDir, train, val, test, device)
+        mse_val, obj_val, final, ood_ate_test, ood_pehe_test = run_SynCBIV(exp, args, dataDir, resultDir, train, val, test, device)
         res_ate_list = res_ate_list + [obj_val['ate_train'],obj_val['ate_test']]
         res_pehe_list = res_pehe_list + [obj_val['pehe_train'],obj_val['pehe_test']]
+        # ood_ate_test = np.array(ood_ate_test) - 1.0
+        # ood_pehe_test = np.array(ood_pehe_test) - 1.0
+        results_ood_ate_cbiv.append(ood_ate_test)
+        results_ood_pehe_cbiv.append(ood_pehe_test)
         
-        res = np.array(res_ate_list) - 1.0
-        res_pehe = np.array(res_pehe_list) - 1.0
-        results_ate.append(res)
+        # res = np.array(res_ate_list) - 1.0
+        # res_pehe = np.array(res_pehe_list) - 1.0
+        results_ate.append(res_ate_list)
         results_pehe.append(res_pehe_list)
+
+    ''' bias rate '''
+    br = [-3.0, -2.5, -2.0, -1.5, -1.3, 1.3, 1.5, 2.0, 2.5, 3.0, 0.0]
+    brdc = {-3.0: 'n30', -2.5:'n25', -2.0:'n20', -1.5:'n15', -1.3:'n13', 1.3:'p13', 1.5:'p15', 2.0:'p20', 2.5:'p25', 3.0:'p30', 0.0:'0'}
 
     results_ate.append(np.mean(results_ate[:][:args.num_reps],0))
     results_ate.append(np.std(results_ate[:][:args.num_reps],0))
     results_pehe.append(np.mean(results_pehe[:][:args.num_reps],0))
     results_pehe.append(np.std(results_pehe[:][:args.num_reps],0))
+    for res, name in zip(results_ood, name_ood):
+        res.append(np.mean(res[:][:args.num_reps],0))
+        res.append(np.std(res[:][:args.num_reps],0))
+        res_df = pd.DataFrame(np.array(res), columns=[brdc[r] for r in br ]).round(4)
+        res_df.to_csv(resultDir + f'CBIV_{args.mode}_' + name + '.csv', index=False)
+
         
     res_ate_df = pd.DataFrame(np.array(results_ate),
                         columns=[ alpha+data_cls for alpha in ['Direct', 'CFR', 'TwoStage', 'CBIV'] for data_cls in ['_train', '_test']]).round(4)
@@ -135,12 +185,17 @@ def run(args):
     results_pehe = pd.DataFrame(np.array(results_pehe),
                         columns=[ alpha+data_cls for alpha in ['Direct', 'CFR', 'TwoStage', 'CBIV'] for data_cls in ['_train', '_test']]).round(4)
     results_pehe.to_csv(resultDir + f'CBIV_{args.mode}_pehe_result.csv', index=False)
+    ''' bias rate '''
+    br = [-3.0, -2.5, -2.0, -1.5, -1.3, 1.3, 1.5, 2.0, 2.5, 3.0, 0.0]
+    brdc = {-3.0: 'n30', -2.5:'n25', -2.0:'n20', -1.5:'n15', -1.3:'n13', 1.3:'p13', 1.5:'p15', 2.0:'p20', 2.5:'p25', 3.0:'p30', 0.0:'0'}
+    
 
 if __name__ == "__main__":
     argparser = argparse.ArgumentParser(description=__doc__)
     # About run setting !!!!
     argparser.add_argument('--seed',default=2021,type=int,help='The random seed')
-    argparser.add_argument('--mode',default='vx',type=str,help='The choice of v/x/vx/xx')
+    argparser.add_argument('--mode',default='x',type=str,help='The choice of v/x/vx/xx')
+    argparser.add_argument('--ood',default=0,type=float,help='The train dataset of OOD')
     argparser.add_argument('--rewrite_log',default=False,type=bool,help='Whether rewrite log file')
     argparser.add_argument('--use_gpu',default=True,type=bool,help='The use of GPU')
     # About data setting ~~~~
@@ -160,7 +215,7 @@ if __name__ == "__main__":
     argparser.add_argument('--storage_path',default='../Data/',type=str,help='The dir of data storage')
     # Syn
     argparser.add_argument('--syn_alpha',default=0.01,type=float,help='')
-    argparser.add_argument('--syn_lambda',default=0.0001,type=float,help='')
+    argparser.add_argument('--syn_lambda',default=0.001,type=float,help='')
     argparser.add_argument('--syn_twoStage',default=True,type=bool,help='')
     # About Debug or Show
     argparser.add_argument('--verbose',default=1,type=int,help='The level of verbose')

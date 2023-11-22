@@ -3,6 +3,7 @@ from scipy.stats import norm
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+import pandas as pd
 
 def get_multivariate_normal_params(dep, m, seed=0):
     np.random.seed(seed)
@@ -92,3 +93,61 @@ def plot(z, pi0_t1, t, y, data_path):
 def get_var_df(df,var):
     var_cols = [c for c in df.columns if c.startswith(var)]
     return df[var_cols].to_numpy()
+
+
+'''
+description: 
+param {*} data 输入数据
+param {*} r bias rate 
+param {*} n size
+param {*} dim_v Dimensions of irrelevant variables
+return {*}
+'''
+def correlation_sample(data, r, n, dim_xs):
+    nall = data.shape[0]
+    prob = np.ones(nall)
+
+    ite = data['m1']-data['m0']
+
+    if r!=0.0:
+        for idv in range(dim_xs):
+            # 和表达式不一样
+            d = np.abs(data[f'xs{idv}'] - np.sign(r) * ite) 
+            prob = prob * np.power(np.abs(r), -10 * d)
+    prob = prob / np.sum(prob)
+    idx = np.random.choice(range(nall), n, p=prob, replace=False)
+
+    new_data = data.iloc[idx].reset_index(drop=True)
+    t = new_data['t0']
+    mu0 = new_data['m0']
+    mu1 = new_data['m1']
+
+    # continuous y
+    y0_cont = mu0 + np.random.normal(loc=0., scale=.1, size=n)
+    y1_cont = mu1 + np.random.normal(loc=0., scale=.1, size=n)
+
+    yf_cont, ycf_cont = pd.Series(np.zeros(n), dtype=float), pd.Series(np.zeros(n), dtype=float)
+    yf_cont[t>0], yf_cont[t<1] = y1_cont[t>0], y0_cont[t<1]
+    ycf_cont[t>0], ycf_cont[t<1] = y0_cont[t>0], y1_cont[t<1]
+
+    new_data['m0'] = y0_cont
+    new_data['m1'] = y1_cont
+    new_data['y0'] = yf_cont
+    new_data['f0'] = ycf_cont
+
+    # binary y
+    # median_0 = np.median(mu0)
+    # median_1 = np.median(mu1)
+    # mu0[mu0 >= median_0] = 1.
+    # mu0[mu0 < median_0] = 0.
+    # mu1[mu1 < median_1] = 0.
+    # mu1[mu1 >= median_1] = 1.
+
+    # yf_bin, ycf_bin = np.zeros(n), np.zeros(n)
+    # yf_bin[t>0], yf_bin[t<1] = mu1[t>0], mu0[t<1]
+    # ycf_bin[t>0], ycf_bin[t<1] = mu0[t>0], mu1[t<1]
+
+    return new_data
+
+def pehe(ypred1, ypred0, mu1, mu0):
+    return np.sqrt(np.mean(np.square((mu1 - mu0) - (ypred1 - ypred0))))

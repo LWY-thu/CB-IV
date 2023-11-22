@@ -4,6 +4,7 @@ from .logFile import *
 from .setSeed import * 
 from .imbFun import * 
 from .dataGenerator import Syn_Generator
+from .dataGenerator_ood import Syn_Generator_OOD
 from .ihdpGenerator import IHDP_Generator
 from .twinsGenerator import Twins_Generator
 from .loadDataset import CausalDataset
