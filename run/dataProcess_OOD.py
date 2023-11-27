@@ -17,6 +17,7 @@ import numpy as np
 import torch
 
 sys.path.append(r"../")
+sys.path.append(r"../../")
 sys.path.append('/home/wyliu/code/CB-IV')
 from utils import * 
 from utils import log, CausalDataset, Syn_Generator_OOD
@@ -121,7 +122,7 @@ if __name__ == "__main__":
     argparser.add_argument('--rewrite_log',default=False,type=bool,help='Whether rewrite log file')
     argparser.add_argument('--use_gpu',default=True,type=bool,help='The use of GPU')
     # About data setting ~~~~
-    argparser.add_argument('--ood_num',default=1000000,type=int,help='The num of train\val\test dataset')
+    argparser.add_argument('--ood_num',default=10000 *100,type=int,help='The num of train\val\test dataset')
     argparser.add_argument('--num',default=10000,type=int,help='The num of train\val\test dataset')
     argparser.add_argument('--num_reps',default=10,type=int,help='The num of train\val\test dataset')
     argparser.add_argument('--ate',default=0,type=float,help='The ate of constant')
@@ -135,7 +136,7 @@ if __name__ == "__main__":
     argparser.add_argument('--mX',default=4,type=int,help='The dim of Confounding variables X')
     argparser.add_argument('--mU',default=4,type=int,help='The dim of Unobserved confounding variables U')
     argparser.add_argument('--mXs',default=2,type=int,help='The dim of Noise variables X')
-    argparser.add_argument('--storage_path',default='../Data/',type=str,help='The dir of data storage')
+    argparser.add_argument('--storage_path',default='../../Data/',type=str,help='The dir of data storage')
     # Syn
     argparser.add_argument('--syn_alpha',default=0.01,type=float,help='')
     argparser.add_argument('--syn_lambda',default=0.0001,type=float,help='')

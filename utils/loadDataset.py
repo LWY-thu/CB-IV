@@ -26,7 +26,7 @@ def get_var_df(df, var):
     return df[var_cols].to_numpy()
         
 class CausalDataset(Dataset):
-    def __init__(self, df, variables = ['u','x','v','z','p','m','t','y','f','c'], observe_vars=['v', 'x']):
+    def __init__(self, df, variables = ['u','x','v','z','p','m','t','y','f','c'], observe_vars=['v', 'x', 'xs']):
         self.length = len(df)
         self.variables = variables
         

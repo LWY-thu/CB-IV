@@ -75,7 +75,7 @@ class MLPModel(nn.Module):
         nn.init.zeros_(final_layer.bias.data)
 
     def forward(self, data):
-        # print(data.shape)
+        print("forward", data.shape)
         num_data = data.shape[0]
         data = data.view(num_data, -1)
         return self.model(data)
@@ -110,7 +110,10 @@ def run(exp, args, dataDir, resultDir, train, val, test, device):
         pass
 
     train_loader = DataLoader(train, batch_size=batch_size)
-
+    # print("train.x:",train.x.shape)
+    # print("train.xs:",train.xs.shape)
+    # print("train.v:",train.v.shape)
+    # print("train.u:",train.u.shape)
     if args.mode == 'v':
         input_dim = args.mV
         train_input = train.v
@@ -123,10 +126,12 @@ def run(exp, args, dataDir, resultDir, train, val, test, device):
         test_input = torch.cat((test.x, test.xs),1)
     else:
         input_dim = args.mV + args.mX + args.mXs
+        # print("input dim:", input_dim)
         train_input = torch.cat((train.v, train.x, train.xs),1)
         val_input = torch.cat((val.v, val.x, val.xs),1)
         test_input = torch.cat((test.v, test.x, test.xs),1)
 
+    
     mlp = MLPModel(input_dim, layer_widths=[128, 64], activation=nn.ReLU(),last_layer=nn.BatchNorm1d(2), num_out=2)
     net = nn.Sequential(mlp)
     optimizer = torch.optim.SGD(net.parameters(), lr=lr)
@@ -140,14 +145,16 @@ def run(exp, args, dataDir, resultDir, train, val, test, device):
             v = inputs['v']
             x = torch.cat((inputs['x'], inputs['xs']), 1)
             t = inputs['t'].reshape(-1).type(torch.LongTensor)
-
+            # print("x:", x.shape)
+            # print("args.mode:",args.mode)
             if args.mode == 'v':
                 input_batch = v
             elif args.mode == 'x':
                 input_batch = x
+                # print("input_batch:", input_batch.shape)
             else:
                 input_batch = torch.cat((v, x),1)
-
+            
             prediction = net(input_batch) 
             loss = loss_func(prediction, t)
 

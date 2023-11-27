@@ -29,16 +29,16 @@ class Syn_Generator_OOD(object):
         assert mV<=mX, 'Assume: the dimension of the IVs is less than Confounders'
         
         if one: # 如果参数one为True，则系数被设置为全1；
-            self.coefs_VXU = np.ones(shape=mV+mX+mU)
-            self.coefs_XU0 = np.ones(shape=mX+mU)
-            self.coefs_XU1 = np.ones(shape=mX+mU)
+            self.coefs_VXU = np.ones(shape=mV+mX+mU+mXs)
+            self.coefs_XU0 = np.ones(shape=mX+mU+mXs)
+            self.coefs_XU1 = np.ones(shape=mX+mU+mXs)
         else: # 否则，系数会从正态分布中随机生成。
             np.random.seed(1*seed_coef*init_seed+3)	          # <--
-            self.coefs_VXU = np.random.normal(size=mV+mX+mU)
+            self.coefs_VXU = np.random.normal(size=mV+mX+mU+mXs)
             
             np.random.seed(2*seed_coef*init_seed+5)	# <--
-            self.coefs_XU0 = np.random.normal(size=mX+mU)
-            self.coefs_XU1 = np.random.normal(size=mX+mU)
+            self.coefs_XU0 = np.random.normal(size=mX+mU+mXs)
+            self.coefs_XU1 = np.random.normal(size=mX+mU+mXs)
             
 
         self.set_path(details)
@@ -49,7 +49,7 @@ class Syn_Generator_OOD(object):
             csv_writer.writerow(self.coefs_XU0)
             csv_writer.writerow(self.coefs_XU1)
         
-        mu, sig = self.get_normal_params(mV, mX, mU, depX, depU)
+        mu, sig = self.get_normal_params(mV=mV, mX=mX+mXs, mU=mU, depX=depX, depU=depU)
         self.set_normal_params(mu, sig)
 
         with open(self.data_path+'norm.csv', 'w') as csvfile:
@@ -161,13 +161,16 @@ class Syn_Generator_OOD(object):
         V = temp[:, 0:mV]
         X = temp[:, mV:mV+mX]
         U = temp[:, mV+mX:mV+mX+mU]
-        Xs = temp[:, mV+mX+mXs:mV+mX+mU+mXs]
+        Xs = temp[:, mV+mX+mU:mV+mX+mU+mXs]
+        X_all = np.concatenate((X, Xs), 1)
+
+
 
         if self.VX:
-            T_vars = np.concatenate([V * X[:, 0:mV],X,U], axis=1)
+            T_vars = np.concatenate([V * X_all[:, 0:mV],X_all,U], axis=1)
         else:
-            T_vars = np.concatenate([V,X,U], axis=1)
-        Y_vars = np.concatenate([X,U], axis=1)
+            T_vars = np.concatenate([V,X_all,U], axis=1)
+        Y_vars = np.concatenate([X_all,U], axis=1)
         
         # 生成Treatment
         np.random.seed(2*seed)	                # <--------------

@@ -155,6 +155,7 @@ class CBIV(object):
 
         ''' Construct input/representation layers '''
         h_in = [x]
+        print("x_shape:",x.shape)
         for i in range(0, FLAGS.n_in):
             if i==0:
                 ''' If using variable selection, first layer is just rescaling'''
@@ -203,6 +204,7 @@ class CBIV(object):
         else:
             h_rep_norm = 1.0*h_rep
 
+        print("h_rep_norm_shape:",h_rep_norm.shape)
         ''' Construct ouput layers '''
         y, y0, y1, weights_out, weights_pred, _, _, _, _ = self._build_output_graph(h_rep_norm, t, dim_in, dim_out, do_out, FLAGS)
         
@@ -360,6 +362,7 @@ class CBIV(object):
 
 def trainNet(Net, sess, train_step, train_data, val_data, test_data, FLAGS, logfile, _logfile, exp, dataDir, args):
     n_train = len(train_data['x'])
+    print(train_data['x'].shape)
     p_treated = np.mean(train_data['t'])
 
     dict_factual = {Net.x: train_data['x'], Net.s: train_data['s'], Net.t: train_data['t'], Net.y_: train_data['yf'], \
