@@ -46,12 +46,16 @@ def mmd2_lin(X,t,p):
 
 def mmd2_rbf(X,t,p,sig):
     """ Computes the l2-RBF MMD for X given t """
-
+    print("type(X)", type(X))
+    print("type(t)", type(t))
+    print("type(sig)", type(sig))
     it = tf.where(t>0)[:,0]
     ic = tf.where(t<1)[:,0]
 
     Xc = tf.gather(X,ic)
     Xt = tf.gather(X,it)
+    print("type(Xc)", type(Xc))
+    print('type(Xt)', type(Xt))
 
     Kcc = tf.exp(-pdist2sq(Xc,Xc)/tf.square(sig))
     Kct = tf.exp(-pdist2sq(Xc,Xt)/tf.square(sig))
@@ -94,6 +98,62 @@ def pop_dist(X,t):
 def wasserstein(X,t,p,lam=10,its=10,sq=False,backpropT=False):
     """ Returns the Wasserstein distance between treatment groups """
 
+    it = tf.where(t>0)[:,0]
+    ic = tf.where(t<1)[:,0]
+    Xc = tf.gather(X,ic)
+    Xt = tf.gather(X,it)
+    nc = tf.to_float(tf.shape(Xc)[0])
+    nt = tf.to_float(tf.shape(Xt)[0])
+
+    ''' Compute distance matrix'''
+    if sq:
+        M = pdist2sq(Xt,Xc)
+    else:
+        M = safe_sqrt(pdist2sq(Xt,Xc))
+
+    ''' Estimate lambda and delta '''
+    M_mean = tf.reduce_mean(M)
+    M_drop = tf.nn.dropout(M,10/(nc*nt))
+    delta = tf.stop_gradient(tf.reduce_max(M))
+    eff_lam = tf.stop_gradient(lam/M_mean)
+
+    ''' Compute new distance matrix '''
+    Mt = M
+    row = delta*tf.ones(tf.shape(M[0:1,:]))
+    col = tf.concat([delta*tf.ones(tf.shape(M[:,0:1])),tf.zeros((1,1))],0)
+    Mt = tf.concat([M,row],0)
+    Mt = tf.concat([Mt,col],1)
+
+    ''' Compute marginal vectors '''
+    a = tf.concat([p*tf.ones(tf.shape(tf.where(t>0)[:,0:1]))/nt, (1-p)*tf.ones((1,1))],0)
+    b = tf.concat([(1-p)*tf.ones(tf.shape(tf.where(t<1)[:,0:1]))/nc, p*tf.ones((1,1))],0)
+
+    ''' Compute kernel matrix'''
+    Mlam = eff_lam*Mt
+    K = tf.exp(-Mlam) + 1e-6 # added constant to avoid nan
+    U = K*Mt
+    ainvK = K/a
+
+    u = a
+    for i in range(0,its):
+        u = 1.0/(tf.matmul(ainvK,(b/tf.transpose(tf.matmul(tf.transpose(u),K)))))
+    v = b/(tf.transpose(tf.matmul(tf.transpose(u),K)))
+
+    T = u*(tf.transpose(v)*K)
+
+    if not backpropT:
+        T = tf.stop_gradient(T)
+
+    E = T*Mt
+    D = 2*tf.reduce_sum(E)
+
+    return D, Mlam
+
+def wasserstein_test(X,t,p,lam=10,its=10,sq=False,backpropT=False):
+    """ Returns the Wasserstein distance between treatment groups """
+    
+    X = tf.convert_to_tensor(X, dtype=tf.float32)
+    t = tf.convert_to_tensor(t, dtype=tf.float32)
     it = tf.where(t>0)[:,0]
     ic = tf.where(t<1)[:,0]
     Xc = tf.gather(X,ic)

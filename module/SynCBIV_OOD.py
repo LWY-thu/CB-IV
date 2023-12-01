@@ -55,7 +55,7 @@ def get_FLAGS():
     tf.app.flags.DEFINE_integer('repetitions', 1, """Repetitions with different seed.""")
     tf.app.flags.DEFINE_integer('use_p_correction', 0, """Whether to use population size p(t) in mmd/disc/wass.""")
     tf.app.flags.DEFINE_string('optimizer', 'Adam', """Which optimizer to use. (RMSProp/Adagrad/GradientDescent/Adam)""")
-    tf.app.flags.DEFINE_string('imb_fun', 'wass', """Which imbalance penalty to use (mmd_lin/mmd_rbf/mmd2_lin/mmd2_rbf/lindisc/wass). """)
+    tf.app.flags.DEFINE_string('imb_fun', 'mmd2_rbf', """Which imbalance penalty to use (mmd_lin/mmd_rbf/mmd2_lin/mmd2_rbf/lindisc/wass). """)
     tf.app.flags.DEFINE_integer('pred_output_delay', 200, """Number of iterations between prediction outputs. (-1 gives no intermediate output). """)
     tf.app.flags.DEFINE_float('val_part', 0.3, """Validation part. """)
     tf.app.flags.DEFINE_boolean('split_output', 1, """Whether to split output layers between treated and control. """)
@@ -469,11 +469,14 @@ def trainNet(Net, sess, train_step, train_data, val_data, test_data, FLAGS, logf
             log(_logfile, loss_str, False)
 
         if i==FLAGS.iterations-1:
-            ''' bias rate '''
-            br = [-3.0, -2.5, -2.0, -1.5, -1.3, 1.3, 1.5, 2.0, 2.5, 3.0, 0.0]
-            brdc = {-3.0: 'n30', -2.5:'n25', -2.0:'n20', -1.5:'n15', -1.3:'n13', 1.3:'p13', 1.5:'p15', 2.0:'p20', 2.5:'p25', 3.0:'p30', 0.0:'0'}
+            # ''' bias rate 1'''
+            # br = [-3.0, -2.5, -2.0, -1.5, -1.3, 1.3, 1.5, 2.0, 2.5, 3.0, 0.0]
+            # brdc = {-3.0: 'n30', -2.5:'n25', -2.0:'n20', -1.5:'n15', -1.3:'n13', 1.3:'p13', 1.5:'p15', 2.0:'p20', 2.5:'p25', 3.0:'p30', 0.0:'0'}
+            ''' bias rate 2'''
+            br = [1.0, 1.3, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]
+            brdc = {1.0:'p10', 1.3:'p13', 1.5:'p15',2.0:'p20', 2.5:'p25', 3.0:'p30',3.5:'p35', 4.0:'p40',4.5:'p45', 5.0:'p50'}
             for r in br:
-                test_df = pd.read_csv(dataDir + f'{exp}/{args.mode}/ood_{brdc[r]}/test.csv')
+                test_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[r]}/{args.mode}/test.csv')
                 test = CausalDataset(test_df, variables = ['u','x','v','xs','z','p','s','m','t','g','y','f','c'], observe_vars=['v','x','xs'])
                 test = {'x':np.concatenate((test.x, test.xs), 1),
                         't':test.t,

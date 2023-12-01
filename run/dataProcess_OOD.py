@@ -30,6 +30,11 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 
 def run(args):
+    if args.use_gpu:
+        device = torch.device('cuda' if torch.cuda.is_available() and args.use_gpu else "cpu")
+    else:
+        device = torch.device('cpu')
+
     Syn_2442 = Syn_Generator_OOD(n=args.ood_num, 
                                  ate=args.ate,
                                  sc=args.sc,
@@ -46,73 +51,76 @@ def run(args):
                                  seed_coef=10,
                                  details=1,
                                  storage_path=args.storage_path)
-    Syn_2442.run(n=args.ood_num, num_reps=args.num_reps)
+    # Syn_2442.run(n=args.ood_num, num_reps=args.num_reps)
 
     Datasets = [Syn_2442]
 
-    # run vx
-    for mode in ['x', 'vx']:
-        data = Datasets[0]
-        which_benchmark = data.which_benchmark
-        which_dataset = data.which_dataset
-        args.num_reps = 10
-        args.mV = data.mV
-        args.mX = data.mX
-        args.mU = data.mU
-        args.mD = data.mXs
-        args.mode = mode
+    # ''' bias rate 1'''
+    # br = [-3.0, -2.5, -2.0, -1.5, -1.3, 1.3, 1.5, 2.0, 2.5, 3.0, 0.0]
+    # brdc = {-3.0: 'n30', -2.5:'n25', -2.0:'n20', -1.5:'n15', -1.3:'n13', 1.3:'p13', 1.5:'p15', 2.0:'p20', 2.5:'p25', 3.0:'p30', 0.0:'0'}
+    ''' bias rate 2'''
+    br = [1.0, 1.3, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]
+    brdc = {1.0:'p10', 1.3:'p13', 1.5:'p15',2.0:'p20', 2.5:'p25', 3.0:'p30',3.5:'p35', 4.0:'p40',4.5:'p45', 5.0:'p50'}
 
-        resultDir = args.storage_path + f'/results/{which_benchmark}_{which_dataset}/'
-        dataDir = f'{args.storage_path}/data/{which_benchmark}/{which_dataset}/'
-        os.makedirs(os.path.dirname(resultDir), exist_ok=True)
-        logfile = f'{resultDir}/log.txt'
 
-        if args.rewrite_log:
-            f = open(logfile,'w')
-            f.close()
-
-        for exp in range(args.num_reps):
+    
+    # set path
+    which_benchmark = 'SynOOD_'+'_'.join(str(item) for item in [args.sc, args.sh, args.one, args.depX, args.depU,args.VX])
+    which_dataset = '_'.join(str(item) for item in [args.mV, args.mX, args.mU, args.mXs])
+    resultDir = args.storage_path + f'/results/{which_benchmark}_{which_dataset}/'
+    dataDir = f'{args.storage_path}/data/{which_benchmark}/{which_dataset}/'
+    os.makedirs(os.path.dirname(resultDir), exist_ok=True)
+    logfile = f'{resultDir}/log.txt'
+    exp = 0
+    
+    for exp in range(args.num_reps):
+        for r in br:
             train_df = pd.read_csv(dataDir + f'{exp}/train.csv')
-            print(dataDir)
             val_df = pd.read_csv(dataDir + f'{exp}/val.csv')
             test_df = pd.read_csv(dataDir + f'{exp}/test.csv')
-                                                        
-            train = CausalDataset(train_df, variables = ['v','u','x','xs','z','p','s','m','t','g','y','f','c'])
-            val = CausalDataset(val_df, variables = ['v','u','x','xs','z','p','s','m','t','g','y','f','c'])
-            test = CausalDataset(test_df, variables = ['v','u','x','xs','z','p','s','m','t','g','y','f','c'])
 
-            train,val,test = run_Reg(exp, args, dataDir, resultDir, train, val, test, device)
-    
-        ''' bias rate '''
-        br = [-3.0, -2.5, -2.0, -1.5, -1.3, 1.3, 1.5, 2.0, 2.5, 3.0, 0.0]
-        brdc = {-3.0: 'n30', -2.5:'n25', -2.0:'n20', -1.5:'n15', -1.3:'n13', 1.3:'p13', 1.5:'p15', 2.0:'p20', 2.5:'p25', 3.0:'p30', 0.0:'0'}
+            train_df_ood = correlation_sample(train_df, r, args.num, args.mXs)
+            val_df_ood = correlation_sample(val_df, r, args.num, args.mXs)
+            test_df_ood = correlation_sample(test_df, r, args.num, args.mXs)
+
+            path = dataDir + '/{}/'.format(exp)
+            os.makedirs(os.path.dirname(path + f'ood_{brdc[r]}/'), exist_ok=True)
+
+            train_df_ood.to_csv(path + f'ood_{brdc[r]}/train.csv', index=False)
+            val_df_ood.to_csv(path + f'ood_{brdc[r]}/val.csv', index=False)
+            test_df_ood.to_csv(path + f'ood_{brdc[r]}/test.csv', index=False)
+
+            # run vx
+            for mode in ['vx']:
+                data = Datasets[0]
+                which_benchmark = data.which_benchmark
+                which_dataset = data.which_dataset
+                args.num_reps = 10
+                args.mV = data.mV
+                args.mX = data.mX
+                args.mU = data.mU
+                args.mXs = data.mXs
+                args.mode = mode
+
+                resultDir = args.storage_path + f'/results/{which_benchmark}_{which_dataset}/'
+                dataDir = f'{args.storage_path}/data/{which_benchmark}/{which_dataset}/'
+                os.makedirs(os.path.dirname(resultDir), exist_ok=True)
+                logfile = f'{resultDir}/log.txt'
+
+                if args.rewrite_log:
+                    f = open(logfile,'w')
+                    f.close()
+
+                train_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[r]}/train.csv')
+                val_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[r]}/val.csv')
+                test_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[r]}/test.csv')
+                                                            
+                train = CausalDataset(train_df, variables = ['v','u','x','xs','z','p','s','m','t','g','y','f','c'])
+                val = CausalDataset(val_df, variables = ['v','u','x','xs','z','p','s','m','t','g','y','f','c'])
+                test = CausalDataset(test_df, variables = ['v','u','x','xs','z','p','s','m','t','g','y','f','c'])
+
+                train,val,test = run_Reg(exp, args, dataDir, resultDir, train, val, test, device, r)   
         
-        # set path
-        which_benchmark = 'SynOOD_'+'_'.join(str(item) for item in [args.sc, args.sh, args.one, args.depX, args.depU,args.VX])
-        which_dataset = '_'.join(str(item) for item in [args.mV, args.mX, args.mU, args.mD])
-        resultDir = args.storage_path + f'/results/{which_benchmark}_{which_dataset}/'
-        dataDir = f'{args.storage_path}/data/{which_benchmark}/{which_dataset}/'
-        os.makedirs(os.path.dirname(resultDir), exist_ok=True)
-        logfile = f'{resultDir}/log.txt'
-        exp = 0
-        
-        for perm in range(args.num_reps):
-            for r in br:
-                train_df = pd.read_csv(dataDir + f'{perm}/{args.mode}/train.csv')
-                val_df = pd.read_csv(dataDir + f'{perm}/{args.mode}/val.csv')
-                test_df = pd.read_csv(dataDir + f'{perm}/{args.mode}/test.csv')
-
-                train_df_ood = correlation_sample(train_df, r, args.num, args.mXs)
-                val_df_ood = correlation_sample(val_df, r, args.num, args.mXs)
-                test_df_ood = correlation_sample(test_df, r, args.num, args.mXs)
-
-                path = dataDir + '/{}/{}/'.format(perm, args.mode)
-                os.makedirs(os.path.dirname(path + f'ood_{brdc[r]}/'), exist_ok=True)
-
-                train_df_ood.to_csv(path + f'ood_{brdc[r]}/train.csv', index=False)
-                val_df_ood.to_csv(path + f'ood_{brdc[r]}/val.csv', index=False)
-                test_df_ood.to_csv(path + f'ood_{brdc[r]}/test.csv', index=False)
-
 if __name__ == "__main__":
     argparser = argparse.ArgumentParser(description=__doc__)
     # About run setting !!!!
@@ -120,9 +128,9 @@ if __name__ == "__main__":
     argparser.add_argument('--mode',default='vx',type=str,help='The choice of v/x/vx/xx')
     argparser.add_argument('--ood',default=0,type=float,help='The train dataset of OOD')
     argparser.add_argument('--rewrite_log',default=False,type=bool,help='Whether rewrite log file')
-    argparser.add_argument('--use_gpu',default=True,type=bool,help='The use of GPU')
+    argparser.add_argument('--use_gpu',default=False,type=bool,help='The use of GPU')
     # About data setting ~~~~
-    argparser.add_argument('--ood_num',default=10000 *100,type=int,help='The num of train\val\test dataset')
+    argparser.add_argument('--ood_num',default=10000 * 100,type=int,help='The num of train\val\test dataset')
     argparser.add_argument('--num',default=10000,type=int,help='The num of train\val\test dataset')
     argparser.add_argument('--num_reps',default=10,type=int,help='The num of train\val\test dataset')
     argparser.add_argument('--ate',default=0,type=float,help='The ate of constant')
@@ -133,7 +141,7 @@ if __name__ == "__main__":
     argparser.add_argument('--depU',default=0.05,type=float,help='Whether generates harder datasets')
     argparser.add_argument('--VX',default=1,type=int,help='The dim of Instrumental variables V')
     argparser.add_argument('--mV',default=2,type=int,help='The dim of Instrumental variables V')
-    argparser.add_argument('--mX',default=4,type=int,help='The dim of Confounding variables X')
+    argparser.add_argument('--mX',default=10,type=int,help='The dim of Confounding variables X')
     argparser.add_argument('--mU',default=4,type=int,help='The dim of Unobserved confounding variables U')
     argparser.add_argument('--mXs',default=2,type=int,help='The dim of Noise variables X')
     argparser.add_argument('--storage_path',default='../../Data/',type=str,help='The dir of data storage')
@@ -150,6 +158,5 @@ if __name__ == "__main__":
     argparser.add_argument('--regt_num_epoch',default=3,type=int,help='The num of total epoch')
     args = argparser.parse_args()
 
-    if args.use_gpu:
-        device = torch.device('cuda' if torch.cuda.is_available() and args.use_gpu else "cpu")
+    
     run(args=args)

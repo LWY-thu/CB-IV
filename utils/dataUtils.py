@@ -107,20 +107,20 @@ def correlation_sample(data, r, n, dim_xs):
     nall = data.shape[0]
     prob = np.ones(nall)
 
-    ite = data['m1']-data['m0']
+    ite = data['mu1']-data['mu0']
 
     if r!=0.0:
         for idv in range(dim_xs):
             # 和表达式不一样
-            d = np.abs(data[f'xs{idv}'] - np.sign(r) * ite) 
+            d = np.abs(data[f'xs{(idv+1)}'] - np.sign(r) * ite) 
             prob = prob * np.power(np.abs(r), -10 * d)
     prob = prob / np.sum(prob)
     idx = np.random.choice(range(nall), n, p=prob, replace=False)
 
     new_data = data.iloc[idx].reset_index(drop=True)
-    t = new_data['t0']
-    mu0 = new_data['m0']
-    mu1 = new_data['m1']
+    t = new_data['t']
+    mu0 = new_data['mu0']
+    mu1 = new_data['mu1']
 
     # continuous y
     y0_cont = mu0 + np.random.normal(loc=0., scale=.1, size=n)
@@ -130,10 +130,10 @@ def correlation_sample(data, r, n, dim_xs):
     yf_cont[t>0], yf_cont[t<1] = y1_cont[t>0], y0_cont[t<1]
     ycf_cont[t>0], ycf_cont[t<1] = y0_cont[t>0], y1_cont[t<1]
 
-    new_data['m0'] = y0_cont
-    new_data['m1'] = y1_cont
-    new_data['y0'] = yf_cont
-    new_data['f0'] = ycf_cont
+    new_data['mu0'] = y0_cont
+    new_data['mu1'] = y1_cont
+    new_data['y'] = yf_cont
+    new_data['f'] = ycf_cont
 
     # binary y
     # median_0 = np.median(mu0)

@@ -75,7 +75,7 @@ class MLPModel(nn.Module):
         nn.init.zeros_(final_layer.bias.data)
 
     def forward(self, data):
-        print("forward", data.shape)
+        # print("forward", data.shape)
         num_data = data.shape[0]
         data = data.view(num_data, -1)
         return self.model(data)
@@ -94,7 +94,7 @@ class MultipleMLPModel(nn.Module):
         outputs = [self.models[i](data) for i in range(self.num_models)]
         return torch.cat(outputs, dim=1)
 
-def run(exp, args, dataDir, resultDir, train, val, test, device):
+def run(exp, args, dataDir, resultDir, train, val, test, device, r):
     batch_size = args.regt_batch_size
     lr = args.regt_lr
     num_epoch = args.regt_num_epoch
@@ -168,22 +168,27 @@ def run(exp, args, dataDir, resultDir, train, val, test, device):
     train.s = F.softmax(net(train_input) , dim=1)[:,1:2]
     val.s = F.softmax(net(val_input) , dim=1)[:,1:2]
     test.s = F.softmax(net(test_input) , dim=1)[:,1:2]
-
-    os.makedirs(os.path.dirname(dataDir + f'{exp}/{args.mode}/'), exist_ok=True)
+    # ''' bias rate 1'''
+    # br = [-3.0, -2.5, -2.0, -1.5, -1.3, 1.3, 1.5, 2.0, 2.5, 3.0, 0.0]
+    # brdc = {-3.0: 'n30', -2.5:'n25', -2.0:'n20', -1.5:'n15', -1.3:'n13', 1.3:'p13', 1.5:'p15', 2.0:'p20', 2.5:'p25', 3.0:'p30', 0.0:'0'}
+    ''' bias rate 2'''
+    br = [1.0, 1.3, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]
+    brdc = {1.0:'p10', 1.3:'p13', 1.5:'p15',2.0:'p20', 2.5:'p25', 3.0:'p30',3.5:'p35', 4.0:'p40',4.5:'p45', 5.0:'p50'}
+    os.makedirs(os.path.dirname(dataDir + f'{exp}/ood_{brdc[r]}/{args.mode}/'), exist_ok=True)
 
     train.to_cpu()
     train.detach()
     tmp_df = train.to_pandas()
-    tmp_df.to_csv(dataDir + f'{exp}/{args.mode}/train.csv', index=False)
+    tmp_df.to_csv(dataDir + f'{exp}/ood_{brdc[r]}/{args.mode}/train.csv', index=False)
 
     val.to_cpu()
     val.detach()
     tmp_df = val.to_pandas()
-    tmp_df.to_csv(dataDir + f'{exp}/{args.mode}/val.csv', index=False)
+    tmp_df.to_csv(dataDir + f'{exp}/ood_{brdc[r]}/{args.mode}/val.csv', index=False)
 
     test.to_cpu()
     test.detach()
     tmp_df = test.to_pandas()
-    tmp_df.to_csv(dataDir + f'{exp}/{args.mode}/test.csv', index=False)
+    tmp_df.to_csv(dataDir + f'{exp}/ood_{brdc[r]}/{args.mode}/test.csv', index=False)
 
     return train,val,test
