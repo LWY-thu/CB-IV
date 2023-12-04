@@ -29,16 +29,16 @@ class Syn_Generator_OOD(object):
         assert mV<=mX, 'Assume: the dimension of the IVs is less than Confounders'
         
         if one: # 如果参数one为True，则系数被设置为全1；
-            self.coefs_VXU = np.ones(shape=mV+mX+mU+mXs)
-            self.coefs_XU0 = np.ones(shape=mX+mU+mXs)
-            self.coefs_XU1 = np.ones(shape=mX+mU+mXs)
+            self.coefs_VXU = np.ones(shape=mV+mX+mU)
+            self.coefs_XU0 = np.ones(shape=mX+mU)
+            self.coefs_XU1 = np.ones(shape=mX+mU)
         else: # 否则，系数会从正态分布中随机生成。
             np.random.seed(1*seed_coef*init_seed+3)	          # <--
-            self.coefs_VXU = np.random.normal(size=mV+mX+mU+mXs)
+            self.coefs_VXU = np.random.normal(size=mV+mX+mU)
             
             np.random.seed(2*seed_coef*init_seed+5)	# <--
-            self.coefs_XU0 = np.random.normal(size=mX+mU+mXs)
-            self.coefs_XU1 = np.random.normal(size=mX+mU+mXs)
+            self.coefs_XU0 = np.random.normal(size=mX+mU)
+            self.coefs_XU1 = np.random.normal(size=mX+mU)
             
 
         self.set_path(details)
@@ -79,7 +79,7 @@ class Syn_Generator_OOD(object):
         self.sig = sig
             
     def set_path(self,details):
-        which_benchmark = 'SynOOD_'+'_'.join(str(item) for item in [self.sc, self.sh, self.one, self.depX, self.depU,self.VX])
+        which_benchmark = 'SynOOD3_'+'_'.join(str(item) for item in [self.sc, self.sh, self.one, self.depX, self.depU,self.VX])
         print(which_benchmark)
         data_path = self.storage_path+'/data/'+which_benchmark
         os.makedirs(os.path.dirname(data_path), exist_ok=True)
@@ -167,14 +167,17 @@ class Syn_Generator_OOD(object):
 
 
         if self.VX:
-            T_vars = np.concatenate([V * X_all[:, 0:mV],X_all,U], axis=1)
+            T_vars = np.concatenate([V * X[:, 0:mV],X,U], axis=1)
         else:
-            T_vars = np.concatenate([V,X_all,U], axis=1)
-        Y_vars = np.concatenate([X_all,U], axis=1)
+            T_vars = np.concatenate([V,X,U], axis=1)
+        Y_vars = np.concatenate([X,U], axis=1)
         
         # 生成Treatment
         np.random.seed(2*seed)	                # <--------------
         z = np.dot(T_vars, self.coefs_VXU)
+        print('T_vars.shape ', T_vars.shape)
+        print('self.coefs_VXU.shape ', self.coefs_VXU.shape)
+        print('z.shape ', z.shape)
         pi0_t1 = scipy.special.expit( self.sc*(z+self.sh) )
         t = np.array([])
         for p in pi0_t1:

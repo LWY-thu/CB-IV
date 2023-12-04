@@ -24,7 +24,6 @@ def get_latent(n, m, dep, seed):
     L = np.array((n*[[]]))
     if m != 0:
         mu, sig = get_multivariate_normal_params(dep, m, seed)
-
         L = np.random.multivariate_normal(mean=mu, cov=sig, size=n)
     return L
 

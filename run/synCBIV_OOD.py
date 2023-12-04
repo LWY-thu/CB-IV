@@ -32,17 +32,18 @@ def run(args):
     else:
         device = torch.device('cpu')
     # set path
-    # ''' bias rate 1'''
-    # br = [-3.0, -2.5, -2.0, -1.5, -1.3, 1.3, 1.5, 2.0, 2.5, 3.0, 0.0]
-    # brdc = {-3.0: 'n30', -2.5:'n25', -2.0:'n20', -1.5:'n15', -1.3:'n13', 1.3:'p13', 1.5:'p15', 2.0:'p20', 2.5:'p25', 3.0:'p30', 0.0:'0'}
-    ''' bias rate 2'''
-    br = [1.0, 1.3, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]
-    brdc = {1.0:'p10', 1.3:'p13', 1.5:'p15',2.0:'p20', 2.5:'p25', 3.0:'p30',3.5:'p35', 4.0:'p40',4.5:'p45', 5.0:'p50'}
-    which_benchmark = 'SynOOD_'+'_'.join(str(item) for item in [args.sc, args.sh, args.one, args.depX, args.depU,args.VX])
+    ''' bias rate 1'''
+    br = [-3.0, -2.5, -2.0, -1.5, -1.3, 1.3, 1.5, 2.0, 2.5, 3.0, 0.0]
+    brdc = {-3.0: 'n30', -2.5:'n25', -2.0:'n20', -1.5:'n15', -1.3:'n13', 1.3:'p13', 1.5:'p15', 2.0:'p20', 2.5:'p25', 3.0:'p30', 0.0:'0'}
+
+    time_str = '20231204_1'
+    which_benchmark = 'SynOOD2_'+'_'.join(str(item) for item in [args.sc, args.sh, args.one, args.depX, args.depU,args.VX])
     which_dataset = '_'.join(str(item) for item in [args.mV, args.mX, args.mU, args.mXs])
     resultDir = args.storage_path + f'/results/{which_benchmark}_{which_dataset}_{args.mode}/ood{brdc[args.ood]}/'
-    dataDir = f'{args.storage_path}/data/{which_benchmark}/{which_dataset}/'
+    resultDir = resultDir + time_str
     os.makedirs(os.path.dirname(resultDir), exist_ok=True)
+    dataDir = f'{args.storage_path}/data/{which_benchmark}/{which_dataset}/'
+    
     logfile = f'{resultDir}/log.txt'
 
     if args.rewrite_log:
@@ -59,6 +60,7 @@ def run(args):
     results_ood_pehe_twostage = []
     results_ood_ate_cbiv = []
     results_ood_pehe_cbiv = []
+    results_ood_earlystop = []
     # results_ood = [results_ood_ate_direct, results_ood_pehe_direct,
     #                results_ood_ate_cfr, results_ood_pehe_cfr,
     #                results_ood_ate_twostage, results_ood_pehe_twostage,
@@ -86,8 +88,7 @@ def run(args):
 
         res_ate_list = []
         res_pehe_list = []
-        ood_ate = []
-        ood_pehe = []
+        ood_earlystop_temp = []
         
         # args.syn_twoStage = False
         # args.syn_alpha = 0
@@ -125,6 +126,7 @@ def run(args):
         mse_val, obj_val, final, ood_ate_test, ood_pehe_test = run_SynCBIV(exp, args, dataDir, resultDir, train, val, test, device)
         res_ate_list = res_ate_list + [obj_val['ate_train'],obj_val['ate_test']]
         res_pehe_list = res_pehe_list + [obj_val['pehe_train'],obj_val['pehe_test']]
+        ood_earlystop_temp = ood_earlystop_temp + [obj_val['ate_ood'],obj_val['pehe_ood']]
         # ood_ate_test = np.array(ood_ate_test) - 1.0
         # ood_pehe_test = np.array(ood_pehe_test) - 1.0
         results_ood_ate_cbiv.append(ood_ate_test)
@@ -132,17 +134,18 @@ def run(args):
         
         # res = np.array(res_ate_list) - 1.0
         # res_pehe = np.array(res_pehe_list) - 1.0
+        results_ood_earlystop.append(ood_earlystop_temp)
         results_ate.append(res_ate_list)
         results_pehe.append(res_pehe_list)
 
-    # ''' bias rate 1'''
-    # br = [-3.0, -2.5, -2.0, -1.5, -1.3, 1.3, 1.5, 2.0, 2.5, 3.0, 0.0]
-    # brdc = {-3.0: 'n30', -2.5:'n25', -2.0:'n20', -1.5:'n15', -1.3:'n13', 1.3:'p13', 1.5:'p15', 2.0:'p20', 2.5:'p25', 3.0:'p30', 0.0:'0'}
-    ''' bias rate 2'''
-    br = [1.0, 1.3, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]
-    brdc = {1.0:'p10', 1.3:'p13', 1.5:'p15',2.0:'p20', 2.5:'p25', 3.0:'p30',3.5:'p35', 4.0:'p40',4.5:'p45', 5.0:'p50'}
+    ''' bias rate 1'''
+    br = [-3.0,3.0]
+    brdc = {-3.0: 'n30', -2.5:'n25', -2.0:'n20', -1.5:'n15', -1.3:'n13', 1.3:'p13', 1.5:'p15', 2.0:'p20', 2.5:'p25', 3.0:'p30', 0.0:'0'}
+    # ''' bias rate 2'''
+    # br = [1.0, 1.3, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]
+    # brdc = {1.0:'p10', 1.3:'p13', 1.5:'p15',2.0:'p20', 2.5:'p25', 3.0:'p30',3.5:'p35', 4.0:'p40',4.5:'p45', 5.0:'p50'}
 
-    time_str = '_positive'
+    
     results_ate.append(np.mean(results_ate[:][:args.num_reps],0))
     results_ate.append(np.std(results_ate[:][:args.num_reps],0))
     results_pehe.append(np.mean(results_pehe[:][:args.num_reps],0))
@@ -160,6 +163,9 @@ def run(args):
     results_pehe = pd.DataFrame(np.array(results_pehe),
                         columns=[ alpha+data_cls for alpha in ['CBIV'] for data_cls in ['_train', '_test']]).round(4)
     results_pehe.to_csv(resultDir + f'CBIV_{args.mode}_pehe_result'+time_str +'.csv', index=False)
+    results_ood_earlystop_df = pd.DataFrame(np.array(results_ood_earlystop),
+                        columns=['ate_ood', 'pehe_ood']).round(4)
+    results_ood_earlystop_df.to_csv()
     print(f"---------------------ood_{brdc[args.ood]}_end---------------------------")
     
 
@@ -168,7 +174,8 @@ if __name__ == "__main__":
     # About run setting !!!!
     argparser.add_argument('--seed',default=2021,type=int,help='The random seed')
     argparser.add_argument('--mode',default='vx',type=str,help='The choice of v/x/vx/xx')
-    argparser.add_argument('--ood',default=0,type=float,help='The train dataset of OOD')
+    argparser.add_argument('--ood',default=3.0,type=float,help='The train dataset of OOD')
+    argparser.add_argument('--ood_test',default=-3.0,type=float,help='The train dataset of OOD')
     argparser.add_argument('--rewrite_log',default=False,type=bool,help='Whether rewrite log file')
     argparser.add_argument('--use_gpu',default=True,type=bool,help='The use of GPU')
     # About data setting ~~~~

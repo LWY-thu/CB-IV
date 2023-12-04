@@ -106,12 +106,12 @@ def run(args):
     ''' bias rate '''
     # args.ood = -3.0
     ''' bias rate 1'''
-    br = [-3.0, -2.5, -2.0, -1.5, -1.3, 1.3, 1.5, 2.0, 2.5, 3.0, 0.0]
+    br = [-3.0, 3.0]
     brdc = {-3.0: 'n30', -2.5:'n25', -2.0:'n20', -1.5:'n15', -1.3:'n13', 1.3:'p13', 1.5:'p15', 2.0:'p20', 2.5:'p25', 3.0:'p30', 0.0:'0'}
     # ''' bias rate 2'''
     # br = [1.0, 1.3, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]
     # brdc = {1.0:'p10', 1.3:'p13', 1.5:'p15',2.0:'p20', 2.5:'p25', 3.0:'p30',3.5:'p35', 4.0:'p40',4.5:'p45', 5.0:'p50'}
-    which_benchmark = 'SynOOD_'+'_'.join(str(item) for item in [args.sc, args.sh, args.one, args.depX, args.depU,args.VX])
+    which_benchmark = 'SynOOD2_'+'_'.join(str(item) for item in [args.sc, args.sh, args.one, args.depX, args.depU,args.VX])
     which_dataset = '_'.join(str(item) for item in [args.mV, args.mX, args.mU, args.mXs])
     resultDir = args.storage_path + f'/results/{which_benchmark}_{which_dataset}_{args.mode}/ood{brdc[args.ood]}/'
     dataDir = f'{args.storage_path}/data/{which_benchmark}/{which_dataset}/'

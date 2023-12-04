@@ -16,6 +16,7 @@ import pandas as pd
 import numpy as np
 import torch
 sys.path.append(r"../")
+sys.path.append(r"../../")
 sys.path.append('/home/wyliu/code/CB-IV')
 from utils import log, CausalDataset
 from module.SynCBIV import run as run_SynCBIV
@@ -88,9 +89,9 @@ def run(args):
         val_df = pd.read_csv(dataDir + f'{exp}/{args.mode}/val.csv')
         test_df = pd.read_csv(dataDir + f'{exp}/{args.mode}/test.csv')
 
-        train = CausalDataset(train_df, variables = ['u','x','v','z','p','s','m','t','g','y','f','c'])
-        val = CausalDataset(val_df, variables = ['u','x','v','z','p','s','m','t','g','y','f','c'])
-        test = CausalDataset(test_df, variables = ['u','x','v','z','p','s','m','t','g','y','f','c'])
+        train = CausalDataset(train_df, variables = ['u','x','v','z','p','s','m','t','g','y','f','c'], observe_vars=['v', 'x'])
+        val = CausalDataset(val_df, variables = ['u','x','v','z','p','s','m','t','g','y','f','c'], observe_vars=['v', 'x'])
+        test = CausalDataset(test_df, variables = ['u','x','v','z','p','s','m','t','g','y','f','c'], observe_vars=['v', 'x'])
 
         res_ate_list = []
         res_pehe_list = []
@@ -119,9 +120,9 @@ def run(args):
         res_ate_list = res_ate_list + [obj_val['ate_train'],obj_val['ate_test']]
         res_pehe_list = res_pehe_list + [obj_val['pehe_train'],obj_val['pehe_test']]
         
-        res = np.array(res_ate_list) - 1.0
-        res_pehe = np.array(res_pehe_list) - 1.0
-        results_ate.append(res)
+        # res = np.array(res_ate_list) - 1.0
+        # res_pehe = np.array(res_pehe_list) - 1.0
+        results_ate.append(res_ate_list)
         results_pehe.append(res_pehe_list)
 
     results_ate.append(np.mean(results_ate[:][:args.num_reps],0))
@@ -154,10 +155,10 @@ if __name__ == "__main__":
     argparser.add_argument('--depU',default=0.05,type=float,help='Whether generates harder datasets')
     argparser.add_argument('--VX',default=1,type=int,help='The dim of Instrumental variables V')
     argparser.add_argument('--mV',default=2,type=int,help='The dim of Instrumental variables V')
-    argparser.add_argument('--mX',default=4,type=int,help='The dim of Confounding variables X')
+    argparser.add_argument('--mX',default=10,type=int,help='The dim of Confounding variables X')
     argparser.add_argument('--mU',default=4,type=int,help='The dim of Unobserved confounding variables U')
-    argparser.add_argument('--mD',default=2,type=int,help='The dim of Noise variables X')
-    argparser.add_argument('--storage_path',default='../Data/',type=str,help='The dir of data storage')
+    argparser.add_argument('--mXs',default=2,type=int,help='The dim of Noise variables X')
+    argparser.add_argument('--storage_path',default='../../Data/',type=str,help='The dir of data storage')
     # Syn
     argparser.add_argument('--syn_alpha',default=0.01,type=float,help='')
     argparser.add_argument('--syn_lambda',default=0.0001,type=float,help='')

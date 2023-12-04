@@ -8,3 +8,4 @@ from .dataGenerator_ood import Syn_Generator_OOD
 from .ihdpGenerator import IHDP_Generator
 from .twinsGenerator import Twins_Generator
 from .loadDataset import CausalDataset
+from .syn_data_generator import Syn_Generator_LWY

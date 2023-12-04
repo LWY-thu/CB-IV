@@ -1,13 +1,3 @@
-'''
-Author: error: error: git config user.name & please set dead value or install git && error: git config user.email & please set dead value or install git & please set dead value or install git
-Date: 2023-11-03 10:09:47
-LastEditors: lwy_thu 760835659@qq.com
-LastEditTime: 2023-11-06 12:48:02
-FilePath: /wyliu/code/CB-IV/run/synCBIV.py
-Description: 
-
-Copyright (c) 2023 by ${git_name_email}, All Rights Reserved. 
-'''
 import sys
 
 import os
@@ -20,13 +10,10 @@ sys.path.append(r"../")
 sys.path.append(r"../../")
 sys.path.append('/home/wyliu/code/CB-IV')
 from utils import * 
-from utils import log, CausalDataset, Syn_Generator_OOD, Syn_Generator
+from utils import log, CausalDataset, syn_data_generator
 # from module.SynCBIV import run as run_SynCBIV
-# from module.SynCBIV import run as run_SynCBIV
-from module.Regression import run as run_Reg
-
 from module.SynCBIV_OOD import run as run_SynCBIV
-# from module.Regression_OOD import run as run_Reg
+from module.Regression_OOD import run as run_Reg
 
 os.environ["CUDA_VISIBLE_DEVICES"] = '2'
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
@@ -37,7 +24,8 @@ def run(args):
         device = torch.device('cuda' if torch.cuda.is_available() and args.use_gpu else "cpu")
     else:
         device = torch.device('cpu')
-    Syn_244 = Syn_Generator(n=args.num, 
+
+    Syn_2442 = Syn_Generator_LWY(n=args.num, 
                                  ate=args.ate,
                                  sc=args.sc,
                                  sh=args.sh,
@@ -48,58 +36,53 @@ def run(args):
                                  mV=args.mV,
                                  mX=args.mX,
                                  mU=args.mU,
-                                #  mXs=args.mXs,
+                                 mXs=args.mXs,
                                  init_seed=7,
                                  seed_coef=10,
                                  details=1,
                                  storage_path=args.storage_path)
-    Syn_244.run(n=args.num, num_reps=args.num_reps)
+    Syn_2442.run(n=args.num, num_reps=args.num_reps)
 
-    Datasets = [Syn_244]
+    Datasets = [Syn_2442]
 
-    # # set path
-    # which_benchmark = 'Syn_'+'_'.join(str(item) for item in [args.sc, args.sh, args.one, args.depX, args.depU,args.VX])
-    # which_dataset = '_'.join(str(item) for item in [args.mV, args.mX, args.mU, args.mXs])
-    # resultDir = args.storage_path + f'/results/{which_benchmark}_{which_dataset}/'
-    # dataDir = f'{args.storage_path}/data/{which_benchmark}/{which_dataset}/'
-    # os.makedirs(os.path.dirname(resultDir), exist_ok=True)
-    # logfile = f'{resultDir}/log.txt'
+    ''' bias rate 1'''
+    br = [-3.0, 3.0]
+    brdc = {-3.0: 'n30', -2.5:'n25', -2.0:'n20', -1.5:'n15', -1.3:'n13', 1.3:'p13', 1.5:'p15', 2.0:'p20', 2.5:'p25', 3.0:'p30', 0.0:'0'}
+ 
+    for exp in range(args.num_reps):
+        for r in br:
+            # run vx
+            for mode in ['vx']:
+                data = Datasets[0]
+                which_benchmark = data.which_benchmark
+                which_dataset = data.which_dataset
+                args.num_reps = 10
+                args.mV = data.mV
+                args.mX = data.mX
+                args.mU = data.mU
+                args.mXs = data.mXs
+                args.mode = mode
 
-    # run vx
-    for mode in ['vx']:
-        data = Datasets[0]
-        which_benchmark = data.which_benchmark
-        which_dataset = data.which_dataset
-        args.num_reps = 10
-        args.mV = data.mV
-        args.mX = data.mX
-        args.mU = data.mU
-        args.mode = mode
+                resultDir = args.storage_path + f'/results/{which_benchmark}_{which_dataset}/'
+                dataDir = f'{args.storage_path}/data/{which_benchmark}/{which_dataset}/'
+                os.makedirs(os.path.dirname(resultDir), exist_ok=True)
+                logfile = f'{resultDir}/log.txt'
 
-        resultDir = args.storage_path + f'/results/{which_benchmark}_{which_dataset}/'
-        dataDir = f'{args.storage_path}/data/{which_benchmark}/{which_dataset}/'
-        os.makedirs(os.path.dirname(resultDir), exist_ok=True)
-        logfile = f'{resultDir}/log.txt'
+                if args.rewrite_log:
+                    f = open(logfile,'w')
+                    f.close()
 
-        if args.rewrite_log:
-            f = open(logfile,'w')
-            f.close()
+                train_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[r]}/train.csv')
+                val_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[r]}/val.csv')
+                test_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[r]}/test.csv')
+                                                            
+                train = CausalDataset(train_df, variables = ['v','u','x','xs','z','p','s','m','t','g','y','f','c'])
+                val = CausalDataset(val_df, variables = ['v','u','x','xs','z','p','s','m','t','g','y','f','c'])
+                test = CausalDataset(test_df, variables = ['v','u','x','xs','z','p','s','m','t','g','y','f','c'])
 
-        for exp in range(args.num_reps):
-            train_df = pd.read_csv(dataDir + f'{exp}/train.csv')
-            print(dataDir)
-            val_df = pd.read_csv(dataDir + f'{exp}/val.csv')
-            test_df = pd.read_csv(dataDir + f'{exp}/test.csv')
+                train,val,test = run_Reg(exp, args, dataDir, resultDir, train, val, test, device, r)   
 
-            # train = CausalDataset(train_df, variables = ['v','u','x','xs','z','p','s','m','t','g','y','f','c'])
-            # val = CausalDataset(val_df, variables = ['v','u','x','xs','z','p','s','m','t','g','y','f','c'])
-            # test = CausalDataset(test_df, variables = ['v','u','x','xs','z','p','s','m','t','g','y','f','c'])
-                                                        
-            train = CausalDataset(train_df, variables = ['v','u','x','z','p','s','m','t','g','y','f','c'], observe_vars=['v', 'x'])
-            val = CausalDataset(val_df, variables = ['v','u','x','z','p','s','m','t','g','y','f','c'], observe_vars=['v', 'x'])
-            test = CausalDataset(test_df, variables = ['v','u','x','z','p','s','m','t','g','y','f','c'], observe_vars=['v', 'x'])
 
-            train,val,test = run_Reg(exp, args, dataDir, resultDir, train, val, test, device)
 
 if __name__ == "__main__":
     argparser = argparse.ArgumentParser(description=__doc__)
@@ -108,7 +91,7 @@ if __name__ == "__main__":
     argparser.add_argument('--mode',default='vx',type=str,help='The choice of v/x/vx/xx')
     argparser.add_argument('--ood',default=0,type=float,help='The train dataset of OOD')
     argparser.add_argument('--rewrite_log',default=False,type=bool,help='Whether rewrite log file')
-    argparser.add_argument('--use_gpu',default=True,type=bool,help='The use of GPU')
+    argparser.add_argument('--use_gpu',default=False,type=bool,help='The use of GPU')
     # About data setting ~~~~
     argparser.add_argument('--ood_num',default=10000,type=int,help='The num of train\val\test dataset')
     argparser.add_argument('--num',default=10000,type=int,help='The num of train\val\test dataset')
