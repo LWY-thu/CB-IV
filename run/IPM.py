@@ -113,12 +113,13 @@ def run(args):
     # brdc = {1.0:'p10', 1.3:'p13', 1.5:'p15',2.0:'p20', 2.5:'p25', 3.0:'p30',3.5:'p35', 4.0:'p40',4.5:'p45', 5.0:'p50'}
     which_benchmark = 'SynOOD2_'+'_'.join(str(item) for item in [args.sc, args.sh, args.one, args.depX, args.depU,args.VX])
     which_dataset = '_'.join(str(item) for item in [args.mV, args.mX, args.mU, args.mXs])
+    
     resultDir = args.storage_path + f'/results/{which_benchmark}_{which_dataset}_{args.mode}/ood{brdc[args.ood]}/'
     dataDir = f'{args.storage_path}/data/{which_benchmark}/{which_dataset}/'
     os.makedirs(os.path.dirname(resultDir), exist_ok=True)
     logfile = f'{resultDir}/log.txt'
     
-    exp=0
+    exp=50
     train_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood]}/{args.mode}/train.csv')
     val_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood]}/{args.mode}/val.csv')
     test_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood]}/{args.mode}/test.csv')
@@ -153,7 +154,7 @@ def run(args):
     mmd_dist = []
     results_ood = [wass_dist, mmd_dist]
     name_ood = ["wass_dist", "mmd_dist"]
-    for exp in range(1): 
+    for exp in range(3): 
         l1 = []
         l2 = []
         for r in br:    
@@ -200,6 +201,7 @@ def run(args):
             res_df = pd.DataFrame(np.array(res), columns=[brdc[r] for r in br ]).round(4)
         else:
             res_df = pd.DataFrame(np.array(res), columns=[brdc[r] for r in br ])
+        print(resultDir + f'IPM_{args.mode}_{brdc[args.ood]}_' + name + '.csv')
         res_df.to_csv(resultDir + f'IPM_{args.mode}_{brdc[args.ood]}_' + name + '.csv', index=False)
 
 if __name__ == "__main__":
@@ -207,7 +209,7 @@ if __name__ == "__main__":
     # About run setting !!!!
     argparser.add_argument('--seed',default=2021,type=int,help='The random seed')
     argparser.add_argument('--mode',default='vx',type=str,help='The choice of v/x/vx/xx')
-    argparser.add_argument('--ood',default=0,type=float,help='The train dataset of OOD')
+    argparser.add_argument('--ood',default=3.0,type=float,help='The train dataset of OOD')
     argparser.add_argument('--rewrite_log',default=False,type=bool,help='Whether rewrite log file')
     argparser.add_argument('--use_gpu',default=True,type=bool,help='The use of GPU')
     # About data setting ~~~~

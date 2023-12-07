@@ -9,3 +9,4 @@ from .ihdpGenerator import IHDP_Generator
 from .twinsGenerator import Twins_Generator
 from .loadDataset import CausalDataset
 from .syn_data_generator import Syn_Generator_LWY
+from .syn_data_generator import Syn_Generator_LWY_IID

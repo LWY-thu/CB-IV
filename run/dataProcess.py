@@ -20,12 +20,10 @@ sys.path.append(r"../")
 sys.path.append(r"../../")
 sys.path.append('/home/wyliu/code/CB-IV')
 from utils import * 
-from utils import log, CausalDataset, Syn_Generator_OOD, Syn_Generator
-# from module.SynCBIV import run as run_SynCBIV
-# from module.SynCBIV import run as run_SynCBIV
+from utils import log, CausalDataset, syn_data_generator
 from module.Regression import run as run_Reg
 
-from module.SynCBIV_OOD import run as run_SynCBIV
+# from module.SynCBIV_OOD import run as run_SynCBIV
 # from module.Regression_OOD import run as run_Reg
 
 os.environ["CUDA_VISIBLE_DEVICES"] = '2'
@@ -37,7 +35,7 @@ def run(args):
         device = torch.device('cuda' if torch.cuda.is_available() and args.use_gpu else "cpu")
     else:
         device = torch.device('cpu')
-    Syn_244 = Syn_Generator(n=args.num, 
+    Syn_244 = Syn_Generator_LWY_IID(n=args.num, 
                                  ate=args.ate,
                                  sc=args.sc,
                                  sh=args.sh,

@@ -46,7 +46,7 @@ def run(args):
     Datasets = [Syn_2442]
 
     ''' bias rate 1'''
-    br = [-3.0, 3.0]
+    br = [-3.0, -2.5, -2.0, -1.5, -1.3, 0.0, 1.3, 1.5, 2.0, 2.5, 3.0]
     brdc = {-3.0: 'n30', -2.5:'n25', -2.0:'n20', -1.5:'n15', -1.3:'n13', 1.3:'p13', 1.5:'p15', 2.0:'p20', 2.5:'p25', 3.0:'p30', 0.0:'0'}
  
     for exp in range(args.num_reps):
@@ -95,7 +95,7 @@ if __name__ == "__main__":
     # About data setting ~~~~
     argparser.add_argument('--ood_num',default=10000,type=int,help='The num of train\val\test dataset')
     argparser.add_argument('--num',default=10000,type=int,help='The num of train\val\test dataset')
-    argparser.add_argument('--num_reps',default=10,type=int,help='The num of train\val\test dataset')
+    argparser.add_argument('--num_reps',default=100,type=int,help='The num of train\val\test dataset')
     argparser.add_argument('--ate',default=0,type=float,help='The ate of constant')
     argparser.add_argument('--sc',default=1,type=float,help='The sc')
     argparser.add_argument('--sh',default=0,type=float,help='The sh')
