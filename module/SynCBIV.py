@@ -68,6 +68,7 @@ def get_FLAGS():
     tf.app.flags.DEFINE_integer('num_reps', 10, """The num of train\val\test dataset.""")
     tf.app.flags.DEFINE_string('des_str', '/_/', 'The description of this running')
     tf.app.flags.DEFINE_boolean('use_gpu', 0, """The use of GPU. """)
+    tf.app.flags.DEFINE_integer('iter', 300, """Number of iterations. """)
 
     if FLAGS.sparse:
         import scipy.sparse as sparse
@@ -502,7 +503,7 @@ def run(exp, args, dataDir, resultDir, train, val, test, device):
     FLAGS.reweight_sample = 0
     FLAGS.p_alpha = alpha
     FLAGS.p_lambda = lamda
-    FLAGS.iterations = 5000
+    FLAGS.iterations = args.iter
     FLAGS.output_delay = 100
     FLAGS.lrate= args.lrate
 

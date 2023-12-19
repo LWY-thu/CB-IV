@@ -21,7 +21,7 @@ sys.path.append('/home/wyliu/code/CB-IV')
 from utils import log, CausalDataset
 import time
 # from module.SynCBIV import run as run_SynCBIV
-from module.SynCBIV_OOD import run as run_SynCBIV
+from module.SynCBIV_OODv0 import run as run_SynCBIV
 
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
@@ -29,7 +29,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 def run(args):   
     if args.use_gpu:
-        os.environ["CUDA_VISIBLE_DEVICES"] = '2'
+        os.environ["CUDA_VISIBLE_DEVICES"] = '0'
         device = torch.device('cuda' if torch.cuda.is_available() and args.use_gpu else "cpu")
     else:
         os.environ["CUDA_VISIBLE_DEVICES"] = '-1'
@@ -97,7 +97,7 @@ def run(args):
         # train_df = pd.read_csv(dataDir + f'{exp}/train.csv')
         # val_df = pd.read_csv(dataDir + f'{exp}/val.csv')
         # test_df = pd.read_csv(dataDir + f'{exp}/test.csv')
-        print(dataDir + f'{exp}/ood_{brdc[args.ood]}/{args.mode}/train.csv')
+        # print(dataDir + f'{exp}/ood_{brdc[args.ood]}/{args.mode}/train.csv')
         train_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood]}/{args.mode}/train.csv')
         val_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood]}/{args.mode}/val.csv')
         test_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood]}/{args.mode}/test.csv')
@@ -109,39 +109,7 @@ def run(args):
         res_ate_list = []
         res_pehe_list = []
         res_loss_list = []
-        # ood_earlystop_temp = []
-        
-        # args.syn_twoStage = False
-        # args.syn_alpha = 0
-        # mse_val, obj_val, final, ood_ate_test, ood_pehe_test = run_SynCBIV(exp, args, dataDir, resultDir, train, val, test, device)
-        # res_ate_list = res_ate_list + [obj_val['ate_train'],obj_val['ate_test']]
-        # res_pehe_list = res_pehe_list + [obj_val['pehe_train'],obj_val['pehe_test']]
-        # # ood_ate_test = np.array(ood_ate_test) - 1.0
-        # # ood_pehe_test = np.array(ood_pehe_test) - 1.0
-        # results_ood_ate_direct.append(ood_ate_test)
-        # results_ood_pehe_direct.append(ood_pehe_test)
-
-        
-        # args.syn_twoStage = False
-        # args.syn_alpha = alpha
-        # mse_val, obj_val, final, ood_ate_test, ood_pehe_test = run_SynCBIV(exp, args, dataDir, resultDir, train, val, test, device)
-        # res_ate_list = res_ate_list + [obj_val['ate_train'],obj_val['ate_test']]
-        # res_pehe_list = res_pehe_list + [obj_val['pehe_train'],obj_val['pehe_test']]
-        # # ood_ate_test = np.array(ood_ate_test) - 1.0
-        # # ood_pehe_test = np.array(ood_pehe_test) - 1.0
-        # results_ood_ate_cfr.append(ood_ate_test)
-        # results_ood_pehe_cfr.append(ood_pehe_test)
-        
-        # args.syn_twoStage = True
-        # args.syn_alpha = 0
-        # mse_val, obj_val, final, ood_ate_test, ood_pehe_test = run_SynCBIV(exp, args, dataDir, resultDir, train, val, test, device)
-        # res_ate_list = res_ate_list + [obj_val['ate_train'],obj_val['ate_test']]
-        # res_pehe_list = res_pehe_list + [obj_val['pehe_train'],obj_val['pehe_test']]
-        # # ood_ate_test = np.array(ood_ate_test) - 1.0
-        # # ood_pehe_test = np.array(ood_pehe_test) - 1.0
-        # results_ood_ate_twostage.append(ood_ate_test)
-        # results_ood_pehe_twostage.append(ood_pehe_test)
-        
+                
         args.syn_twoStage = True
         args.syn_alpha = alpha
         start_time = time.time()
@@ -177,7 +145,7 @@ def run(args):
             results_ood_pehe_tr_obj.append(train_obj_val['pehe_ood_list'])
             results_ood_pehe_tr_f.append(train_f_val['pehe_ood_list'])
             results_ood_pehe_val_obj.append(valid_obj_val['pehe_ood_list'])
-            results_ood_pehe_val_f.append(train_obj_val['pehe_ood_list'])
+            results_ood_pehe_val_f.append(valid_f_val['pehe_ood_list'])
 
         
         # res = np.array(res_ate_list) - 1.0
@@ -223,10 +191,10 @@ if __name__ == "__main__":
     # About run setting !!!!
     argparser.add_argument('--seed',default=2021,type=int,help='The random seed')
     argparser.add_argument('--mode',default='vx',type=str,help='The choice of v/x/vx/xx')
-    argparser.add_argument('--ood',default=-3.0,type=float,help='The train dataset of OOD')
-    argparser.add_argument('--ood_test',default=3.0,type=float,help='The train dataset of OOD')
+    argparser.add_argument('--ood',default=3.0,type=float,help='The train dataset of OOD')
+    argparser.add_argument('--ood_test',default=-3.0,type=float,help='The train dataset of OOD')
     argparser.add_argument('--rewrite_log',default=False,type=bool,help='Whether rewrite log file')
-    argparser.add_argument('--use_gpu',default=0,type=int,help='The use of GPU')
+    argparser.add_argument('--use_gpu',default=1,type=int,help='The use of GPU')
     argparser.add_argument('--des_str',default='/_/',type=str,help='The description of this running')
     argparser.add_argument('--oodtestall',default=0,type=int,help='The random seed')
     argparser.add_argument('--iter',default=3000,type=int,help='The num of iterations')
@@ -253,7 +221,11 @@ if __name__ == "__main__":
     # About Debug or Show
     argparser.add_argument('--verbose',default=1,type=int,help='The level of verbose')
     argparser.add_argument('--epoch_show',default=5,type=int,help='The epochs of show time')
+    # About Regression_t
+    argparser.add_argument('--regt_batch_size',default=500,type=int,help='The size of one batch')
+    argparser.add_argument('--regt_lr',default=0.05,type=float,help='The learning rate')
+    argparser.add_argument('--regt_num_epoch',default=5,type=int,help='The num of total epoch')
     args = argparser.parse_args()
-
+    
     run(args=args)
 

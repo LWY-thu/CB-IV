@@ -41,12 +41,12 @@ def run(args):
                                  seed_coef=10,
                                  details=1,
                                  storage_path=args.storage_path)
-    Syn_2442.run(n=args.num, num_reps=args.num_reps)
+    # Syn_2442.run(n=args.num, num_reps=args.num_reps)
 
     Datasets = [Syn_2442]
 
     ''' bias rate 1'''
-    br = [-3.0, -2.5, -2.0, -1.5, -1.3, 0.0, 1.3, 1.5, 2.0, 2.5, 3.0]
+    br = [-3.0, -2.5, -2.0, -1.5, -1.3, 1.3, 1.5, 2.0, 2.5, 3.0]
     brdc = {-3.0: 'n30', -2.5:'n25', -2.0:'n20', -1.5:'n15', -1.3:'n13', 1.3:'p13', 1.5:'p15', 2.0:'p20', 2.5:'p25', 3.0:'p30', 0.0:'0'}
  
     for exp in range(args.num_reps):
@@ -118,7 +118,7 @@ if __name__ == "__main__":
     # About Regression_t
     argparser.add_argument('--regt_batch_size',default=500,type=int,help='The size of one batch')
     argparser.add_argument('--regt_lr',default=0.05,type=float,help='The learning rate')
-    argparser.add_argument('--regt_num_epoch',default=3,type=int,help='The num of total epoch')
+    argparser.add_argument('--regt_num_epoch',default=10,type=int,help='The num of total epoch')
     args = argparser.parse_args()
 
     

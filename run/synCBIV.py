@@ -69,7 +69,7 @@ def run(args):
     des_str = args.des_str
     which_benchmark = 'Syn_'+'_'.join(str(item) for item in [args.sc, args.sh, args.one, args.depX, args.depU,args.VX])
     which_dataset = '_'.join(str(item) for item in [args.mV, args.mX, args.mU])
-    resultDir = args.storage_path + f'/results/{which_benchmark}_{which_dataset}/'
+    resultDir = args.storage_path + f'/results/{which_benchmark}_{which_dataset}_{args.mode}/'
     dataDir = f'{args.storage_path}/data/{which_benchmark}/{which_dataset}/'
     os.makedirs(os.path.dirname(resultDir), exist_ok=True)
     resultDir = resultDir + des_str
@@ -176,6 +176,7 @@ if __name__ == "__main__":
     argparser.add_argument('--rewrite_log',default=False,type=bool,help='Whether rewrite log file')
     argparser.add_argument('--use_gpu',default=True,type=bool,help='The use of GPU')
     argparser.add_argument('--des_str',default='/_/',type=str,help='The description of this running')
+    argparser.add_argument('--iter',default=3000,type=int,help='The num of iterations')
     # About data setting ~~~~
     argparser.add_argument('--num',default=10000,type=int,help='The num of train\val\test dataset')
     argparser.add_argument('--num_reps',default=10,type=int,help='The num of train\val\test dataset')
