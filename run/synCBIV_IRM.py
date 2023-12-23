@@ -73,15 +73,6 @@ def run(args):
     results_ood_pehe_tr_f = []
     results_ood_pehe_val_obj = []
     results_ood_pehe_val_f = []
-    # results_ood_earlystop = []
-    # results_ood = [results_ood_ate_direct, results_ood_pehe_direct,
-    #                results_ood_ate_cfr, results_ood_pehe_cfr,
-    #                results_ood_ate_twostage, results_ood_pehe_twostage,
-    #                results_ood_ate_cbiv, results_ood_pehe_cbiv]
-    # name_ood = ["results_ood_ate_direct", "results_ood_pehe_direct",
-    #                "results_ood_ate_cfr", "results_ood_pehe_cfr",
-    #                "results_ood_ate_twostage", "results_ood_pehe_twostage",
-    #                "results_ood_ate_cbiv", "results_ood_pehe_cbiv"]
     results_ood = [results_ood_ate_tr_obj, results_ood_ate_tr_f,
                    results_ood_ate_val_obj, results_ood_ate_val_f,
                    results_ood_pehe_tr_obj, results_ood_pehe_tr_f,
@@ -93,11 +84,21 @@ def run(args):
                    'results_ood_pehe_val_obj', 'results_ood_pehe_val_f']
     alpha = args.syn_alpha
     for exp in range(args.num_reps):
-        # load data
-        print(dataDir + f'{exp}/ood_{brdc[args.ood]}/{args.mode}/train.csv')
-        train = []
-        val = []
-        test = []
+        # load data v0
+        train_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood]}/{args.mode}/train.csv')
+        val_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood]}/{args.mode}/val.csv')
+        test_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood]}/{args.mode}/test.csv')
+
+        # # load data v1
+        # train_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood]}/train.csv')
+        # val_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood]}/val.csv')
+        # test_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood]}/test.csv')
+        # print(dataDir + f'{exp}/ood_{brdc[args.ood]}/train.csv')
+
+        train = CausalDataset(train_df, variables = ['u','x','v','xs','z','p','s','m','t','g','y','f','c'], observe_vars=['v','x','xs'])
+        val = CausalDataset(val_df, variables = ['u','x','v','xs','z','p','s','m','t','g','y','f','c'], observe_vars=['v','x','xs'])
+        test = CausalDataset(test_df, variables = ['u','x','v','xs','z','p','s','m','t','g','y','f','c'], observe_vars=['v','x','xs'])
+
         res_ate_list = []
         res_pehe_list = []
         res_loss_list = []
@@ -139,10 +140,6 @@ def run(args):
             results_ood_pehe_val_obj.append(valid_obj_val['pehe_ood_list'])
             results_ood_pehe_val_f.append(valid_f_val['pehe_ood_list'])
 
-        
-        # res = np.array(res_ate_list) - 1.0
-        # res_pehe = np.array(res_pehe_list) - 1.0
-        # results_ood_earlystop.append(ood_earlystop_temp)
         results_ate.append(res_ate_list)
         results_pehe.append(res_pehe_list)
         results_loss.append(res_loss_list)
@@ -216,9 +213,10 @@ if __name__ == "__main__":
     # About Regression_t
     argparser.add_argument('--regt_batch_size',default=500,type=int,help='The size of one batch')
     argparser.add_argument('--regt_lr',default=0.05,type=float,help='The learning rate')
-    argparser.add_argument('--regt_num_epoch',default=3,type=int,help='The num of total epoch')
+    argparser.add_argument('--regt_num_epoch',default=1,type=int,help='The num of total epoch')
     # About IRM  
-    argparser.add_argument('--env_list',default=[-3.0, 3.0],type=list,help='The environment list')
+    argparser.add_argument('--env_list',default=[3.0, 1.3],type=list,help='The environment list')
+    argparser.add_argument('--env_str',default='[3.0, 1.3]',type=str,help='The environment list')
     argparser.add_argument('--data_dict',default={},type=dict,help='The data dict')
     args = argparser.parse_args()
     

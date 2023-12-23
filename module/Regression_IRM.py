@@ -190,7 +190,7 @@ def run(exp, args, dataDir, resultDir, train_env, val_env, test_env, device, r):
     return train,val,test
 
 
-def run_ood_IRM(exp, args, dataDir, resultDir, ood_test_dict=None):
+def run_ood_IRM(exp, args, dataDir, resultDir, train, test_ood):
     batch_size = args.regt_batch_size
     lr = args.regt_lr
     num_epoch = args.regt_num_epoch
@@ -200,37 +200,39 @@ def run_ood_IRM(exp, args, dataDir, resultDir, ood_test_dict=None):
     set_seed(args.seed)
 
     for r in args.env_list:
-        train = args.data_dict[r]['train']
-        val = args.data_dict[r]['val']
-        test = args.data_dict[r]['test']
+        train_temp = args.data_dict[r]['train']
+        val_temp = args.data_dict[r]['val']
+        test_temp = args.data_dict[r]['test']
 
         try:
-            train.to_tensor()
-            val.to_tensor()
-            test.to_tensor()
+            train_temp.to_tensor()
+            val_temp.to_tensor()
+            test_temp.to_tensor()
         except:
             pass
         
-        args.data_dict[r]['trainloader_reg'] = DataLoader(train, batch_size=batch_size)
+        args.data_dict[r]['trainloader_reg'] = DataLoader(train_temp, batch_size=batch_size)
         len_loader= len(args.data_dict[r]['trainloader_reg'])
+
+    try:
+        train.to_tensor()
+        test_ood.to_tensor()
+    except:
+        pass
 
     if args.mode == 'v':
         input_dim = args.mV
         train_input = train.v
-        val_input = val.v
-        test_input = test.v
+        test_ood_input = test_ood.v
     elif args.mode == 'x':
         input_dim = args.mX + args.mXs
         train_input = torch.cat((train.x, train.xs),1)
-        val_input = torch.cat((val.x, val.xs),1)
-        test_input = torch.cat((test.x, test.xs),1)
+        test_ood_input = torch.cat((test_ood.x, test_ood.xs),1)
     else:
         input_dim = args.mV + args.mX + args.mXs
         # print("input dim:", input_dim)
         train_input = torch.cat((train.v, train.x, train.xs),1)
-        val_input = torch.cat((val.v, val.x, val.xs),1)
-        test_input = torch.cat((test.v, test.x, test.xs),1)
-
+        test_ood_input = torch.cat((test_ood.v, test_ood.x, test_ood.xs),1)
     
     mlp = MLPModel(input_dim, layer_widths=[128, 64], activation=nn.ReLU(),last_layer=nn.BatchNorm1d(2), num_out=2)
     net = nn.Sequential(mlp)
@@ -244,7 +246,6 @@ def run_ood_IRM(exp, args, dataDir, resultDir, ood_test_dict=None):
         log(_logfile, f"Exp {exp} :this is the {epoch}/{num_epoch} epochs.", False)
         train_loaders = [iter(args.data_dict[r]['trainloader_reg']) for r in args.env_list]
         for _ in range(len_loader):
-            # print(_)
             error = 0
             penalty = 0
             for loader in train_loaders:
@@ -276,33 +277,30 @@ def run_ood_IRM(exp, args, dataDir, resultDir, ood_test_dict=None):
 
         log(logfile, 'The train accuracy: {:.2f} %'.format((torch.true_divide(sum(train.t.reshape(-1) == torch.max(F.softmax(net(train_input) , dim=1), 1)[1]), len(train.t))).item() * 100))
         log(_logfile, 'The train accuracy: {:.2f} %'.format((torch.true_divide(sum(train.t.reshape(-1) == torch.max(F.softmax(net(train_input) , dim=1), 1)[1]), len(train.t))).item() * 100))
-        log(_logfile, 'The test  accuracy: {:.2f} %'.format((torch.true_divide(sum(test.t.reshape(-1) == torch.max(F.softmax(net(test_input) , dim=1), 1)[1]), len(test.t))).item() * 100))
+        log(_logfile, 'The test  accuracy: {:.2f} %'.format((torch.true_divide(sum(test_ood.t.reshape(-1) == torch.max(F.softmax(net(test_ood_input) , dim=1), 1)[1]), len(test_ood.t))).item() * 100))
+    
+    ''' bias rate 1'''
+    br = [-3.0, -2.5, -2.0, -1.5, -1.3, 0.0, 1.3, 1.5, 2.0, 2.5, 3.0]
+    brdc = {-3.0: 'n30', -2.5:'n25', -2.0:'n20', -1.5:'n15', -1.3:'n13', 1.3:'p13', 1.5:'p15', 2.0:'p20', 2.5:'p25', 3.0:'p30', 0.0:'0'}
+    for r in br:
+        test_ood = args.data_dict[r]['test']
+        try:
+            test_ood.to_tensor()
+        except:
+            pass
+        if args.mode == 'v':
+            input_dim = args.mV
+            test_input_ood = test_ood.v
+        elif args.mode == 'x':
+            input_dim = args.mX + args.mXs
+            test_input_ood = torch.cat((test_ood.x, test_ood.xs),1)
+        else:
+            input_dim = args.mV + args.mX + args.mXs
+            test_input_ood = torch.cat((test_ood.v, test_ood.x, test_ood.xs),1)
+        test_ood.s = F.softmax(net(test_input_ood) , dim=1)[:,1:2]
+        test_ood.to_cpu()
+        test_ood.detach()
+        args.data_dict[r]['test'] = test_ood
 
-    # train.s = F.softmax(net(train_input) , dim=1)[:,1:2]
-    # val.s = F.softmax(net(val_input) , dim=1)[:,1:2]
-    # test.s = F.softmax(net(test_input) , dim=1)[:,1:2]
-    # ''' bias rate 1'''
-    # br = [-3.0, -2.5, -2.0, -1.5, -1.3, 0.0, 1.3, 1.5, 2.0, 2.5, 3.0]
-    # brdc = {-3.0: 'n30', -2.5:'n25', -2.0:'n20', -1.5:'n15', -1.3:'n13', 1.3:'p13', 1.5:'p15', 2.0:'p20', 2.5:'p25', 3.0:'p30', 0.0:'0'}
-    # for r in br:
-    #     test_ood = ood_test_dict[brdc[r]]
-    #     try:
-    #         test_ood.to_tensor()
-    #     except:
-    #         pass
-    #     if args.mode == 'v':
-    #         input_dim = args.mV
-    #         test_input_ood = test_ood.v
-    #     elif args.mode == 'x':
-    #         input_dim = args.mX + args.mXs
-    #         test_input_ood = torch.cat((test_ood.x, test_ood.xs),1)
-    #     else:
-    #         input_dim = args.mV + args.mX + args.mXs
-    #         test_input_ood = torch.cat((test_ood.v, test_ood.x, test_ood.xs),1)
-    #     test_ood.s = F.softmax(net(test_input_ood) , dim=1)[:,1:2]
-    #     test_ood.to_cpu()
-    #     test_ood.detach()
-    #     ood_test_dict[brdc[r]] = test_ood
 
-    # return ood_test_dict\
     return

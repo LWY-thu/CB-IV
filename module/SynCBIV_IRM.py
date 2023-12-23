@@ -11,6 +11,7 @@ from utils.dataUtils import *
 from utils import log, CausalDataset
 import time
 from module.Regression_IRM import run_ood_IRM as run_Reg
+from tensorboardX import SummaryWriter
 
 
 def get_FLAGS():
@@ -76,7 +77,11 @@ def get_FLAGS():
     tf.app.flags.DEFINE_integer('use_gpu', 0, """The use of GPU. """)
     tf.app.flags.DEFINE_integer('oodtestall', 0, """ood test all.""")
     tf.app.flags.DEFINE_integer('iter', 300, """Number of iterations. """)
-    
+    tf.app.flags.DEFINE_float('regt_lr', 0.05, """Validation part. """)
+    tf.app.flags.DEFINE_integer('regt_num_epoch', 300, """Number of iterations. """)
+    tf.app.flags.DEFINE_integer('version', 1, """Version. """)
+    # About IRM  
+    tf.app.flags.DEFINE_string('env_str', '[3.0, -3.0]', 'The environment list')
 
     if FLAGS.sparse:
         import scipy.sparse as sparse
@@ -93,7 +98,7 @@ class CBIV(object):
             self.nonlin = tf.nn.elu
         else:
             self.nonlin = tf.nn.relu
-
+        print('init 2')
         self._build_graph(x, s, t, y_ , p_t, FLAGS, r_alpha, r_lambda, do_in, do_out, dims)
 
     def _add_variable(self, var, name):
@@ -134,7 +139,7 @@ class CBIV(object):
         self.weights_pred   The (linear) prediction layer weights
         self.h_rep          The layer of the penalized representation
         """
-
+        
         self.x = x
         self.s = s
         self.t = t
@@ -295,7 +300,7 @@ class CBIV(object):
         if FLAGS.varsel:
             self.w_proj = tf.placeholder("float", shape=[dim_input], name='w_proj')
             self.projection = weights_in[0].assign(self.w_proj)
-
+        print('bulid graph 3')
         self.output = y
         self.tot_loss = tot_error
         self.imb_loss = imb_error
@@ -371,10 +376,12 @@ class CBIV(object):
 
         return y, y0, y1, weights_out, weights_pred, weights_out0, weights_pred0, weights_out1, weights_pred1
 
-def trainNet(Net, sess, train_step, train_data, val_data, test_data, FLAGS, logfile, _logfile, exp, dataDir, resultDir, device, args, ood_test_dict):
+def trainNet(Net, sess, train_step, train_data, val_data, test_data, FLAGS, logfile, _logfile, exp, dataDir, resultDir, device, args):
+    writer = SummaryWriter(resultDir + '/logs/')
     n_train = len(train_data['x'])
-    # print(train_data['x'].shape)
+    print('train net 4')
     p_treated = np.mean(train_data['t'])
+    
 
     dict_factual = {Net.x: train_data['x'], Net.s: train_data['s'], Net.t: train_data['t'], Net.y_: train_data['yf'], \
             Net.do_in: 1.0, Net.do_out: 1.0, Net.r_alpha: FLAGS.p_alpha, \
@@ -441,9 +448,11 @@ def trainNet(Net, sess, train_step, train_data, val_data, test_data, FLAGS, logf
 
         # IRM 训练阶段x_batch修改为x_batch = [x_batch_e1, x_batch_e2]
         if not objnan:
-            sess.run(train_step, feed_dict={Net.x: x_batch, Net.s: s_batch, Net.t: t_batch, \
+            print('train net 5')
+            _, temp = sess.run([train_step, Net.tot_loss], feed_dict={Net.x: x_batch, Net.s: s_batch, Net.t: t_batch, \
                 Net.y_: y_batch, Net.do_in: FLAGS.dropout_in, Net.do_out: FLAGS.dropout_out, \
                 Net.r_alpha: FLAGS.p_alpha, Net.r_lambda: FLAGS.p_lambda, Net.p_t: p_treated})
+
 
         ''' Project variable selection weights '''
         if FLAGS.varsel:
@@ -477,7 +486,7 @@ def trainNet(Net, sess, train_step, train_data, val_data, test_data, FLAGS, logf
             y_pred_mu1_test = sess.run(Net.output, feed_dict={Net.x: test_data['x'], Net.s: 1-test_data['s']+test_data['s'], Net.t: 1-test_data['t']+test_data['t'], Net.do_in: 1.0, Net.do_out: 1.0})
 
             
-            test_ood = ood_test_dict[brdc[args.ood_test]]
+            test_ood = args.data_dict[args.ood_test]['test']
             # test_ood.to_numpy()
             # print(dataDir + f'{exp}/ood_{brdc[args.ood_test]}/{args.mode}/test.csv')
             # test_ood = CausalDataset(test_df_ood, variables = ['u','x','v','xs','z','p','s','m','t','g','y','f','c'], observe_vars=['v','x','xs'])
@@ -496,7 +505,7 @@ def trainNet(Net, sess, train_step, train_data, val_data, test_data, FLAGS, logf
 
             if FLAGS.oodtestall == 1:
                 for r in br:
-                    test = ood_test_dict[brdc[r]]
+                    test = args.data_dict[r]['test']
                     test = {'x':np.concatenate((test.x, test.xs), 1),
                             't':test.t,
                             's':test.s,
@@ -563,14 +572,42 @@ def trainNet(Net, sess, train_step, train_data, val_data, test_data, FLAGS, logf
             
             loss_str = str(i) + '\tObj: %.4f,\tF: %.4f,\tCf: %.4f,\tValObj: %.4f,\tVaF: %.4f,\tate_train: %.4f,\tate_test: %.4f\tpehe_train: %.4f,\tpehe_test: %.4f,\tate_ood: %.4f,\tpehe_ood: %.4f' \
                     % (obj_loss, f_error, cf_error, valid_obj, valid_f_error, final['ate_train'], final['ate_test'], final['pehe_train'], final['pehe_test'], ate_ood, pehe_ood)
-            
+
+            writer.add_scalars(f'Exp{exp}/Loss', {
+                'total_train':obj_loss,
+                'f_train':f_error,
+                'cf_train':cf_error,
+                'valobj_train':valid_obj,
+                'valf_train':valid_f_error,
+            },i)
+            writer.add_scalars(f'Exp{exp}/Eval/ATE', {
+                'ate_train':final['ate_train'],
+                'ate_test':final['ate_test'],
+                'ate_ood':ate_ood
+            },i)
+            writer.add_scalars(f'Exp{exp}/Eval/PEHE', {
+                'pehe_train':final['pehe_train'],
+                'pehe_test':final['pehe_test'],
+                'pehe_ood':pehe_ood
+            },i)
 
             log(logfile, loss_str)
             log(_logfile, loss_str, False)
         
     return train_obj_val, train_f_val, valid_obj_val, valid_f_val, final
 
+class TrainStep:
+    def __init__(self):
+        self.l1 = tf.placeholder(tf.float32, name='l1')
+        self.l2 = tf.placeholder(tf.float32, name='l2')
+        self.tot = self.l1 + self.l2
+
+    def get_train_op(self, opt, global_step=None):
+        train_op = opt.minimize(self.tot, global_step=global_step)
+        return train_op
+
 def run(exp, args, dataDir, resultDir, train, val, test, device):
+    
 
     tf.reset_default_graph()
     random.seed(args.seed)
@@ -611,25 +648,23 @@ def run(exp, args, dataDir, resultDir, train, val, test, device):
             'trainloader_reg': None,
             'env': 0,
         }
+        test_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[r]}/test.csv')
+        args.data_dict[r]['test'] = CausalDataset(test_df, variables = ['u','x','v','xs','z','p','s','m','t','g','y','f','c'], observe_vars=['v','x','xs'])
         if r in args.env_list:
             args.data_dict[r]['env'] = 1
-            train_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[r]}/{args.mode}/train.csv')
-            val_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[r]}/{args.mode}/val.csv')
-            test_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[r]}/{args.mode}/test.csv')
-
+            train_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[r]}/train.csv')
+            val_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[r]}/val.csv')
             args.data_dict[r]['train'] = CausalDataset(train_df, variables = ['u','x','v','xs','z','p','s','m','t','g','y','f','c'], observe_vars=['v','x','xs'])
             args.data_dict[r]['val'] = CausalDataset(val_df, variables = ['u','x','v','xs','z','p','s','m','t','g','y','f','c'], observe_vars=['v','x','xs'])
-            args.data_dict[r]['test'] = CausalDataset(test_df, variables = ['u','x','v','xs','z','p','s','m','t','g','y','f','c'], observe_vars=['v','x','xs'])
+            
 
     # 初始化ood数据
     if args.oodtestall == 1:
-        ood_test_dict = {}
-        for r in br:
-            test_df_ood = pd.read_csv(dataDir + f'{exp}/ood_{brdc[r]}/test.csv')
-            test_ood = CausalDataset(test_df_ood, variables = ['u','x','v','xs','z','p','s','m','t','g','y','f','c'], observe_vars=['v','x','xs'])
-            ood_test_dict[r] = test_ood
-        ood_test_dict = run_Reg(exp, args, dataDir, resultDir, ood_test_dict) 
-        print('len(ood_test_dict)', len(ood_test_dict))
+        test_df_ood = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood_test]}/test.csv')
+        print(dataDir + f'{exp}/ood_{brdc[args.ood_test]}/test.csv')
+        test_ood = CausalDataset(test_df_ood, variables = ['u','x','v','xs','z','p','s','m','t','g','y','f','c'], observe_vars=['v','x','xs'])
+
+        run_Reg(exp, args, dataDir, resultDir, train, test_ood) 
         
     try:
         train.to_numpy()
@@ -682,6 +717,7 @@ def run(exp, args, dataDir, resultDir, train, val, test, device):
     do_out = tf.placeholder("float", name='dropout_out')
     p = tf.placeholder("float", name='p_treated')
     dims = [train['x'].shape[1], FLAGS.dim_in, FLAGS.dim_out]
+    print("1")
     Net = CBIV(x, s, t, y_, p, FLAGS, r_alpha, r_lambda, do_in, do_out, dims)
 
     # 2
@@ -709,7 +745,7 @@ def run(exp, args, dataDir, resultDir, train, val, test, device):
         opt = tf.train.RMSPropOptimizer(lr, FLAGS.decay)
 
     train_step = opt.minimize(Net.tot_loss,global_step=global_step)
-    
-    train_obj_val, train_f_val, valid_obj_val, valid_f_val, final = trainNet(Net, sess, train_step, train, val, test, FLAGS, logfile, _logfile, exp, dataDir, resultDir, device, args, ood_test_dict)
-    
+      
+    train_obj_val, train_f_val, valid_obj_val, valid_f_val, final = trainNet(Net, sess, train_step, train, val, test, FLAGS, logfile, _logfile, exp, dataDir, resultDir, device, args)
+    # train_obj_val, train_f_val, valid_obj_val, valid_f_val, final = trainNet(Net, sess, train, val, test, FLAGS, logfile, _logfile, exp, dataDir, resultDir, device, args)
     return train_obj_val, train_f_val, valid_obj_val, valid_f_val, final

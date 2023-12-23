@@ -4,6 +4,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import pandas as pd
+from sklearn.model_selection import train_test_split
 
 def get_multivariate_normal_params(dep, m, seed=0):
     np.random.seed(seed)
@@ -150,3 +151,18 @@ def correlation_sample(data, r, n, dim_xs):
 
 def pehe(ypred1, ypred0, mu1, mu0):
     return np.sqrt(np.mean(np.square((mu1 - mu0) - (ypred1 - ypred0))))
+
+def split_data(data):
+    # 划分训练集和剩余数据
+    train_data, remaining_data = train_test_split(data, test_size=0.3, shuffle=True, random_state=42)
+
+    # 划分测试集和验证集
+    test_data, val_data = train_test_split(remaining_data, test_size=(1/3), shuffle=True, random_state=42)
+
+    # 打印划分后的数据集大小
+    print("训练集大小:", len(train_data))
+    print("测试集大小:", len(test_data))
+    print("验证集大小:", len(val_data))
+
+    # 进行后续操作，使用划分后的数据集
+    return train_data, val_data, test_data

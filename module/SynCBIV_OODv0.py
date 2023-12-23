@@ -10,7 +10,7 @@ from utils.imbFun import *
 from utils.dataUtils import *
 from utils import log, CausalDataset
 import time
-
+from tensorboardX import SummaryWriter
 
 def get_FLAGS():
     ''' Define parameter flags '''
@@ -75,6 +75,12 @@ def get_FLAGS():
     tf.app.flags.DEFINE_integer('use_gpu', 0, """The use of GPU. """)
     tf.app.flags.DEFINE_integer('oodtestall', 0, """ood test all.""")
     tf.app.flags.DEFINE_integer('iter', 300, """Number of iterations. """)
+    tf.app.flags.DEFINE_float('regt_lr', 0.05, """Validation part. """)
+    tf.app.flags.DEFINE_integer('regt_num_epoch', 300, """Number of iterations. """)
+    tf.app.flags.DEFINE_integer('version', 1, """Version. """)
+    # About IRM  
+    tf.app.flags.DEFINE_string('env_str', '[3.0, -3.0]', 'The environment list')
+
     
 
     if FLAGS.sparse:
@@ -369,7 +375,8 @@ class CBIV(object):
 
         return y, y0, y1, weights_out, weights_pred, weights_out0, weights_pred0, weights_out1, weights_pred1
 
-def trainNet(Net, sess, train_step, train_data, val_data, test_data, FLAGS, logfile, _logfile, exp, dataDir, args):
+def trainNet(Net, sess, train_step, train_data, val_data, test_data, FLAGS, logfile, _logfile, exp, dataDir, resultDir, args):
+    writer = SummaryWriter(resultDir + '/logs/')
     n_train = len(train_data['x'])
     # print(train_data['x'].shape)
     p_treated = np.mean(train_data['t'])
@@ -561,6 +568,44 @@ def trainNet(Net, sess, train_step, train_data, val_data, test_data, FLAGS, logf
             loss_str = str(i) + '\tObj: %.4f,\tF: %.4f,\tCf: %.4f,\tValObj: %.4f,\tVaF: %.4f,\tate_train: %.4f,\tate_test: %.4f\tpehe_train: %.4f,\tpehe_test: %.4f,\tate_ood: %.4f,\tpehe_ood: %.4f' \
                     % (obj_loss, f_error, cf_error, valid_obj, valid_f_error, final['ate_train'], final['ate_test'], final['pehe_train'], final['pehe_test'], ate_ood, pehe_ood)
             
+            # 设置颜色字典
+            color_dict_loss = {
+                'total_train': 'red',
+                'f_train': 'blue',
+                'cf_train': 'green',
+                'valobj_train': 'orange',
+                'valf_train': 'purple',
+            }
+            writer.add_scalars(f'Exp{exp}/Loss', {
+                'total_train':obj_loss,
+                'f_train':f_error,
+                'cf_train':cf_error,
+                'valobj_train':valid_obj,
+                'valf_train':valid_f_error,
+            },i)
+
+            # 设置颜色字典
+            color_dict_ate = {
+                'ate_train': 'Yellow',
+                'ate_test': 'Magenta',
+                'ate_ood': 'Lime',
+            }
+            writer.add_scalars(f'Exp{exp}/Eval/ATE', {
+                'ate_train':final['ate_train'],
+                'ate_test':final['ate_test'],
+                'ate_ood':ate_ood
+            },i)
+
+            color_dict_pehe = {
+                'pehe_train': 'Navy',
+                'pehe_test': 'Olive',
+                'pehe_ood': 'Maroon',
+            }
+            writer.add_scalars(f'Exp{exp}/Eval/PEHE', {
+                'pehe_train':final['pehe_train'],
+                'pehe_test':final['pehe_test'],
+                'pehe_ood':pehe_ood
+            },i)
 
             log(logfile, loss_str)
             log(_logfile, loss_str, False)
@@ -675,6 +720,6 @@ def run(exp, args, dataDir, resultDir, train, val, test, device):
 
     train_step = opt.minimize(Net.tot_loss,global_step=global_step)
     
-    train_obj_val, train_f_val, valid_obj_val, valid_f_val, final = trainNet(Net, sess, train_step, train, val, test, FLAGS, logfile, _logfile, exp, dataDir, args)
+    train_obj_val, train_f_val, valid_obj_val, valid_f_val, final = trainNet(Net, sess, train_step, train, val, test, FLAGS, logfile, _logfile, exp, dataDir, resultDir, args)
     
     return train_obj_val, train_f_val, valid_obj_val, valid_f_val, final

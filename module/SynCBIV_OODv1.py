@@ -80,7 +80,9 @@ def get_FLAGS():
     tf.app.flags.DEFINE_integer('iter', 300, """Number of iterations. """)
     tf.app.flags.DEFINE_float('regt_lr', 0.05, """Validation part. """)
     tf.app.flags.DEFINE_integer('regt_num_epoch', 300, """Number of iterations. """)
-    
+    tf.app.flags.DEFINE_integer('version', 1, """Version. """)
+    # About IRM  
+    tf.app.flags.DEFINE_string('env_str', '[3.0, -3.0]', 'The environment list')
 
     if FLAGS.sparse:
         import scipy.sparse as sparse
@@ -632,14 +634,11 @@ def run(exp, args, dataDir, resultDir, train, val, test, device):
             test_df_ood = pd.read_csv(dataDir + f'{exp}/ood_{brdc[r]}/test.csv')
             test_ood = CausalDataset(test_df_ood, variables = ['u','x','v','xs','z','p','s','m','t','g','y','f','c'], observe_vars=['v','x','xs'])
             ood_test_dict[brdc[r]] = test_ood
-        test_df_ood = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood_test]}/{args.mode}/test.csv')
-        # print(dataDir + f'{exp}/ood_{brdc[args.ood_test]}/{args.mode}/test.csv')
+        test_df_ood = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood_test]}/test.csv')
+        print(dataDir + f'{exp}/ood_{brdc[args.ood_test]}/test.csv')
         test_ood = CausalDataset(test_df_ood, variables = ['u','x','v','xs','z','p','s','m','t','g','y','f','c'], observe_vars=['v','x','xs'])
 
         train, val, test, ood_test_dict = run_Reg(exp, args, dataDir, resultDir, train, val, test, test_ood, device, ood_test_dict) 
-        # print('len(ood_test_dict)', len(ood_test_dict))
-
-        
     
     try:
         train.to_numpy()

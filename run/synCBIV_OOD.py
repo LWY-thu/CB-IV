@@ -19,9 +19,10 @@ sys.path.append(r"../")
 sys.path.append(r"../../")
 sys.path.append('/home/wyliu/code/CB-IV')
 from utils import log, CausalDataset
+from utils import *
 import time
 # from module.SynCBIV import run as run_SynCBIV
-from module.SynCBIV_OODv0 import run as run_SynCBIV
+from module.SynCBIV_OODv1 import run as run_SynCBIV
 
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
@@ -93,14 +94,15 @@ def run(args):
                    'results_ood_pehe_val_obj', 'results_ood_pehe_val_f']
     alpha = args.syn_alpha
     for exp in range(args.num_reps):
-        # load data
-        # train_df = pd.read_csv(dataDir + f'{exp}/train.csv')
-        # val_df = pd.read_csv(dataDir + f'{exp}/val.csv')
-        # test_df = pd.read_csv(dataDir + f'{exp}/test.csv')
-        # print(dataDir + f'{exp}/ood_{brdc[args.ood]}/{args.mode}/train.csv')
-        train_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood]}/{args.mode}/train.csv')
-        val_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood]}/{args.mode}/val.csv')
-        test_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood]}/{args.mode}/test.csv')
+        # # load data v0
+        # train_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood]}/{args.mode}/train.csv')
+        # val_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood]}/{args.mode}/val.csv')
+        # test_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood]}/{args.mode}/test.csv')
+
+        # load data v1
+        train_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood]}/train.csv')
+
+        train_df, val_df, test_df = split_data(train_df)
 
         train = CausalDataset(train_df, variables = ['u','x','v','xs','z','p','s','m','t','g','y','f','c'], observe_vars=['v','x','xs'])
         val = CausalDataset(val_df, variables = ['u','x','v','xs','z','p','s','m','t','g','y','f','c'], observe_vars=['v','x','xs'])
