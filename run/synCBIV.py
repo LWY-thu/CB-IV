@@ -119,7 +119,7 @@ def run(args):
         # res_ate_list = res_ate_list + [obj_val['ate_train'],obj_val['ate_test']]
         # res_pehe_list = res_pehe_list + [obj_val['pehe_train'],obj_val['pehe_test']]
         
-        args.syn_twoStage = True
+        args.syn_twoStage = False
         args.syn_alpha = alpha
         start_time = time.time()
         train_obj_val, train_f_val, valid_obj_val, valid_f_val, final = run_SynCBIV(exp, args, dataDir, resultDir, train, val, test, device)

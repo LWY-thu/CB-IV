@@ -225,6 +225,7 @@ class CBIV(object):
         y, y0, y1, weights_out, weights_pred, _, _, _, _ = self._build_output_graph(h_rep_norm, t, dim_in, dim_out, do_out, FLAGS)
         
         if FLAGS.twoStage:
+            print('twostage')
             y = s * y1 + (1-s) * y0
 
         ''' Compute sample reweighting '''

@@ -71,9 +71,22 @@
 
 # python synCBIV_IRM.py --iter=200 --lrate=0.004 --oodtestall=1 --num_reps=20 --des_str='/1230_lr=0.004_reps=20_v1/' --env_str='[1.3,3.0]' --ood_test=-3.0 --use_gpu=0 &
 
-# 1223 synCBIV_OOD_Aggr v1聚合训练，lr=0.001 0.002 0.0025 0.003 效果都较差
-python synCBIV_OOD_Aggr.py --iter=20000 --lrate=0.001 --oodtestall=1 --num_reps=20 --des_str='/1223_lr=0.001_reps=20_v1_split/' --env_str='[1.3,3.0]' --ood_test=-3.0 --version=1 --use_gpu=0 &
-python synCBIV_OOD_Aggr.py --iter=20000 --lrate=0.002 --oodtestall=1 --num_reps=20 --des_str='/1223_lr=0.002_reps=20_v1_split/' --env_str='[1.3,3.0]' --ood_test=-3.0 --version=1 --use_gpu=0 &
-python synCBIV_OOD_Aggr.py --iter=20000 --lrate=0.003 --oodtestall=1 --num_reps=20 --des_str='/1223_lr=0.003_reps=20_v1_split/' --env_str='[1.3,3.0]' --ood_test=-3.0 --version=1 --use_gpu=0 &
-python synCBIV_OOD_Aggr.py --iter=20000 --lrate=0.001 --oodtestall=1 --num_reps=20 --des_str='/1223_lr=0.001_reps=20_v1_split/' --env_str='[-3.0,3.0]' --ood_test=-3.0 --version=1 --use_gpu=0 &
-python synCBIV_OOD_Aggr.py --iter=20000 --lrate=0.002 --oodtestall=1 --num_reps=20 --des_str='/1223_lr=0.002_reps=20_v1_split/' --env_str='[-3.0,3.0]' --ood_test=-3.0 --version=1 --use_gpu=0 &
+# # 1223 synCBIV_OOD_Aggr v1聚合训练，lr=0.001 0.002 0.0025 0.003 效果都较差
+# python synCBIV_OOD_Aggr.py --iter=20000 --lrate=0.001 --oodtestall=1 --num_reps=20 --des_str='/1223_lr=0.001_reps=20_v1_split/' --env_str='[1.3,3.0]' --ood_test=-3.0 --version=1 --use_gpu=0 &
+# python synCBIV_OOD_Aggr.py --iter=20000 --lrate=0.002 --oodtestall=1 --num_reps=20 --des_str='/1223_lr=0.002_reps=20_v1_split/' --env_str='[1.3,3.0]' --ood_test=-3.0 --version=1 --use_gpu=0 &
+# python synCBIV_OOD_Aggr.py --iter=20000 --lrate=0.003 --oodtestall=1 --num_reps=20 --des_str='/1223_lr=0.003_reps=20_v1_split/' --env_str='[1.3,3.0]' --ood_test=-3.0 --version=1 --use_gpu=0 &
+# python synCBIV_OOD_Aggr.py --iter=20000 --lrate=0.001 --oodtestall=1 --num_reps=20 --des_str='/1223_lr=0.001_reps=20_v1_split/' --env_str='[-3.0,3.0]' --ood_test=-3.0 --version=1 --use_gpu=0 &
+# python synCBIV_OOD_Aggr.py --iter=20000 --lrate=0.002 --oodtestall=1 --num_reps=20 --des_str='/1223_lr=0.002_reps=20_v1_split/' --env_str='[-3.0,3.0]' --ood_test=-3.0 --version=1 --use_gpu=0 &
+
+# 1225 CBIV设置为CFR测试结果
+# python synCBIV_OOD.py --iter=20000 --lrate=0.001 --oodtestall=1 --num_reps=20 --des_str='/1226_lr=0.001_reps=20_CFR/' --ood=3.0 --ood_test=-3.0 &
+# python synCBIV_OOD.py --iter=20000 --lrate=0.002 --oodtestall=1 --num_reps=20 --des_str='/1225_lr=0.002_reps=20_CFR/' --ood=3.0 --ood_test=-3.0 &
+# python synCBIV_OOD.py --iter=20000 --lrate=0.001 --oodtestall=1 --num_reps=20 --des_str='/1225_lr=0.001_reps=20_CFR/' --ood=-3.0 --ood_test=3.0 &
+# python synCBIV_OOD.py --iter=20000 --lrate=0.002 --oodtestall=1 --num_reps=20 --des_str='/1225_lr=0.002_reps=20_CFR/' --ood=-3.0 --ood_test=3.0 &
+
+python synCBIV_OOD.py --iter=20000 --lrate=0.001 --oodtestall=1 --num_reps=20 --des_str='/1225_lr=0.001_reps=20_CFR_v0/' --ood=3.0 --ood_test=-3.0 --version=0 &
+python synCBIV_OOD.py --iter=20000 --lrate=0.002 --oodtestall=1 --num_reps=20 --des_str='/1225_lr=0.002_reps=20_CFR_v0/' --ood=3.0 --ood_test=-3.0 --version=0 &
+python synCBIV_OOD.py --iter=20000 --lrate=0.001 --oodtestall=1 --num_reps=20 --des_str='/1225_lr=0.001_reps=20_CFR_v0/' --ood=-3.0 --ood_test=3.0 --version=0 &
+python synCBIV_OOD.py --iter=20000 --lrate=0.002 --oodtestall=1 --num_reps=20 --des_str='/1225_lr=0.002_reps=20_CFR_v0/' --ood=-3.0 --ood_test=3.0 --version=0 &
+
+python synCBIV.py --iter=5000 --mV=2 --mX=12 --mU=4 --num_reps=10 --lrate=0.0005 --des_str='/1227_iter=5000_lr=0.0005_reps=10/'

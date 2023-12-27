@@ -8,6 +8,8 @@ except:
 from utils import set_seed, log, set_tf_seed
 from utils.imbFun import *
 from utils.dataUtils import *
+import time
+from tensorboardX import SummaryWriter
 
 def get_FLAGS():
     ''' Define parameter flags '''
@@ -350,7 +352,8 @@ class CBIV(object):
 
         return y, y0, y1, weights_out, weights_pred, weights_out0, weights_pred0, weights_out1, weights_pred1
 
-def trainNet(Net, sess, train_step, train_data, val_data, test_data, FLAGS, logfile, _logfile, exp):
+def trainNet(Net, sess, train_step, train_data, val_data, test_data, FLAGS, logfile, _logfile, exp, dataDir, resultDir, device, args):
+    writer = SummaryWriter(resultDir + '/logs/')
     n_train = len(train_data['x'])
     p_treated = np.mean(train_data['t'])
 
@@ -479,6 +482,23 @@ def trainNet(Net, sess, train_step, train_data, val_data, test_data, FLAGS, logf
 
             loss_str = str(i) + '\tObj: %.4f,\tF: %.4f,\tCf: %.4f,\tImb: %.2g,\tVal: %.4f,\tValImb: %.2g,\tValObj: %.4f,\tate_train: %.4f,\tate_test: %.4f\tpehe_train: %.4f,\tpehe_test: %.4f' \
                     % (obj_loss, f_error, cf_error, imb_err, valid_f_error, valid_imb, valid_obj, final['ate_train'], final['ate_test'], final['pehe_train'], final['pehe_test'])
+            
+            writer.add_scalars(f'Exp{exp}/Loss', {
+                'total_train':obj_loss,
+                'f_train':f_error,
+                'cf_train':cf_error,
+                'valobj_train':valid_obj,
+                'valf_train':valid_f_error,
+            },i)
+            writer.add_scalars(f'Exp{exp}/Eval/ATE', {
+                'ate_train':final['ate_train'],
+                'ate_test':final['ate_test'],
+            },i)
+            writer.add_scalars(f'Exp{exp}/Eval/PEHE', {
+                'pehe_train':final['pehe_train'],
+                'pehe_test':final['pehe_test'],
+            },i)
+
             log(logfile, loss_str)
             log(_logfile, loss_str, False)
         
@@ -587,6 +607,6 @@ def run(exp, args, dataDir, resultDir, train, val, test, device):
 
     train_step = opt.minimize(Net.tot_loss,global_step=global_step)
     
-    train_obj_val, train_f_val, valid_obj_val, valid_f_val, final = trainNet(Net, sess, train_step, train, val, test, FLAGS, logfile, _logfile, exp)
+    train_obj_val, train_f_val, valid_obj_val, valid_f_val, final = trainNet(Net, sess, train_step, train, val, test, FLAGS, logfile, _logfile, exp, dataDir, resultDir, device, args)
     
     return train_obj_val, train_f_val, valid_obj_val, valid_f_val, final

@@ -22,7 +22,7 @@ from utils import log, CausalDataset
 from utils import *
 import time
 # from module.SynCBIV import run as run_SynCBIV
-from module.SynCBIV_OODv1 import run as run_SynCBIV
+# from module.SynCBIV_OODv1 import run as run_SynCBIV
 
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
@@ -36,6 +36,12 @@ def run(args):
         os.environ["CUDA_VISIBLE_DEVICES"] = '-1'
         device = torch.device('cpu')
     print('device:', device)
+    if args.version == 0:
+        print("version0")
+        from module.SynCBIV_OODv0 import run as run_SynCBIV
+    elif args.version == 1:
+        print("version1")
+        from module.SynCBIV_OODv1 import run as run_SynCBIV
     # set path
     ''' bias rate 1'''
     br = [-3.0, -2.5, -2.0, -1.5, -1.3, 1.3, 1.5, 2.0, 2.5, 3.0, 0.0]
@@ -95,12 +101,12 @@ def run(args):
     alpha = args.syn_alpha
     for exp in range(args.num_reps):
         # # load data v0
-        # train_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood]}/{args.mode}/train.csv')
+        train_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood]}/{args.mode}/train.csv')
         # val_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood]}/{args.mode}/val.csv')
         # test_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood]}/{args.mode}/test.csv')
 
         # load data v1
-        train_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood]}/train.csv')
+        # train_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood]}/train.csv')
 
         train_df, val_df, test_df = split_data(train_df)
 
@@ -112,7 +118,7 @@ def run(args):
         res_pehe_list = []
         res_loss_list = []
                 
-        args.syn_twoStage = True
+        args.syn_twoStage = False
         args.syn_alpha = alpha
         start_time = time.time()
         train_obj_val, train_f_val, valid_obj_val, valid_f_val, final= run_SynCBIV(exp, args, dataDir, resultDir, train, val, test, device)
@@ -200,6 +206,7 @@ if __name__ == "__main__":
     argparser.add_argument('--des_str',default='/_/',type=str,help='The description of this running')
     argparser.add_argument('--oodtestall',default=0,type=int,help='The random seed')
     argparser.add_argument('--iter',default=3000,type=int,help='The num of iterations')
+    argparser.add_argument('--version',default=1,type=int,help='The version')
     # About data setting ~~~~
     argparser.add_argument('--num',default=10000,type=int,help='The num of train\val\test dataset')
     argparser.add_argument('--num_reps',default=100,type=int,help='The num of train\val\test dataset')
