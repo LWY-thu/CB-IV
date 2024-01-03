@@ -267,7 +267,7 @@ def run_ood_stage1(exp, args, dataDir, resultDir, train, val, test, test_ood, de
     br = [-3.0, -2.5, -2.0, -1.5, -1.3, 0.0, 1.3, 1.5, 2.0, 2.5, 3.0]
     brdc = {-3.0: 'n30', -2.5:'n25', -2.0:'n20', -1.5:'n15', -1.3:'n13', 1.3:'p13', 1.5:'p15', 2.0:'p20', 2.5:'p25', 3.0:'p30', 0.0:'0'}
     for r in br:
-        test_ood = ood_test_dict[brdc[r]]
+        test_ood = ood_test_dict[r]
         try:
             test_ood.to_tensor()
         except:
@@ -284,7 +284,7 @@ def run_ood_stage1(exp, args, dataDir, resultDir, train, val, test, test_ood, de
         test_ood.s = F.softmax(net(test_input_ood) , dim=1)[:,1:2]
         test_ood.to_cpu()
         test_ood.detach()
-        ood_test_dict[brdc[r]] = test_ood
+        ood_test_dict[r] = test_ood
 
     train.to_cpu()
     train.detach()

@@ -231,8 +231,9 @@ class CBIV(object):
         ''' Compute sample reweighting '''
         if FLAGS.reweight_sample:
             w_t = t/(2*p_t)
-            w_c = (1-t)/(2*1-p_t)
-            sample_weight = w_t + w_c
+            # 不一样
+            w_c = (1-t)/(2*1-p_t) 
+            sample_weight = w_t + w_c 
         else:
             sample_weight = 1.0
 
@@ -485,7 +486,7 @@ def trainNet(Net, sess, train_step, train_data, val_data, test_data, FLAGS, logf
             y_pred_mu1_test = sess.run(Net.output, feed_dict={Net.x: test_data['x'], Net.s: 1-test_data['s']+test_data['s'], Net.t: 1-test_data['t']+test_data['t'], Net.do_in: 1.0, Net.do_out: 1.0})
 
             
-            test_ood = ood_test_dict[brdc[args.ood_test]]
+            test_ood = ood_test_dict[args.ood_test]
             # test_ood.to_numpy()
             # print(dataDir + f'{exp}/ood_{brdc[args.ood_test]}/{args.mode}/test.csv')
             # test_ood = CausalDataset(test_df_ood, variables = ['u','x','v','xs','z','p','s','m','t','g','y','f','c'], observe_vars=['v','x','xs'])
@@ -504,7 +505,7 @@ def trainNet(Net, sess, train_step, train_data, val_data, test_data, FLAGS, logf
 
             if FLAGS.oodtestall == 1:
                 for r in br:
-                    test = ood_test_dict[brdc[r]]
+                    test = ood_test_dict[r]
                     test = {'x':np.concatenate((test.x, test.xs), 1),
                             't':test.t,
                             's':test.s,
@@ -634,7 +635,7 @@ def run(exp, args, dataDir, resultDir, train, val, test, device):
         for r in br:
             test_df_ood = pd.read_csv(dataDir + f'{exp}/ood_{brdc[r]}/test.csv')
             test_ood = CausalDataset(test_df_ood, variables = ['u','x','v','xs','z','p','s','m','t','g','y','f','c'], observe_vars=['v','x','xs'])
-            ood_test_dict[brdc[r]] = test_ood
+            ood_test_dict[r] = test_ood
         test_df_ood = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood_test]}/test.csv')
         print(dataDir + f'{exp}/ood_{brdc[args.ood_test]}/test.csv')
         test_ood = CausalDataset(test_df_ood, variables = ['u','x','v','xs','z','p','s','m','t','g','y','f','c'], observe_vars=['v','x','xs'])

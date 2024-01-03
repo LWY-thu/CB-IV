@@ -101,7 +101,7 @@ def run(args):
     alpha = args.syn_alpha
     for exp in range(args.num_reps):
         # # load data v0
-        train_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood]}/{args.mode}/train.csv')
+        train_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood]}/train.csv')
         # val_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood]}/{args.mode}/val.csv')
         # test_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood]}/{args.mode}/test.csv')
 
@@ -113,6 +113,12 @@ def run(args):
         train = CausalDataset(train_df, variables = ['u','x','v','xs','z','p','s','m','t','g','y','f','c'], observe_vars=['v','x','xs'])
         val = CausalDataset(val_df, variables = ['u','x','v','xs','z','p','s','m','t','g','y','f','c'], observe_vars=['v','x','xs'])
         test = CausalDataset(test_df, variables = ['u','x','v','xs','z','p','s','m','t','g','y','f','c'], observe_vars=['v','x','xs'])
+
+        if train.s.shape[1] == 0:
+            train.s = np.zeros((train.s.shape[0], 1))
+            val.s = np.zeros((val.s.shape[0], 1))
+            test.s = np.zeros((test.s.shape[0], 1))
+
 
         res_ate_list = []
         res_pehe_list = []
