@@ -187,7 +187,7 @@ def run(exp, args, dataDir, resultDir, train, val, test, device, r):
 
     return train,val,test
 
-
+# 在第一阶段加入OOD                 
 def run_ood_stage1(exp, args, dataDir, resultDir, train, val, test, test_ood, device, ood_test_dict):
     batch_size = args.regt_batch_size
     lr = args.regt_lr

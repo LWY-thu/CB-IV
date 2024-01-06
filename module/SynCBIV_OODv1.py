@@ -81,6 +81,9 @@ def get_FLAGS():
     tf.app.flags.DEFINE_float('regt_lr', 0.05, """Validation part. """)
     tf.app.flags.DEFINE_integer('regt_num_epoch', 300, """Number of iterations. """)
     tf.app.flags.DEFINE_integer('version', 1, """Version. """)
+    tf.app.flags.DEFINE_integer('ivreg', 1, """Version. """)
+    tf.app.flags.DEFINE_integer('start_reps', 0, """The start of train\val\test dataset. """)
+    
     # About IRM  
     tf.app.flags.DEFINE_string('env_str', '[3.0, -3.0]', 'The environment list')
 
@@ -407,30 +410,30 @@ def trainNet(Net, sess, train_step, train_data, val_data, test_data, FLAGS, logf
     objnan = False
 
     train_f_bset = 99999
-    train_f_val = {'best':99999, 'ate_train': None, 'ate_test': None, 'itr': 0, 'pehe_train': None, 'pehe_test': None, 'ate_ood': None, 'pehe_ood': None,
+    train_f_val = {'best':99999, 'cf_error':None, 'ate_train': None, 'ate_test': None, 'itr': 0, 'pehe_train': None, 'pehe_test': None, 'ate_ood': None, 'pehe_ood': None,
                    'ate_ood_list': [], 'pehe_ood_list': [], 
             'hat_yf_train': None, 'hat_ycf_train': None, 'hat_mu0_train': None, 'hat_mu1_train': None , 
             'hat_yf_test': None, 'hat_ycf_test': None, 'hat_mu0_test': None, 'hat_mu1_test': None }
 
     train_obj_best = 99999
-    train_obj_val = {'best':99999, 'ate_train': None, 'ate_test': None, 'itr': 0, 'pehe_train': None, 'pehe_test': None, 'ate_ood': None, 'pehe_ood': None,
+    train_obj_val = {'best':99999, 'cf_error':None, 'ate_train': None, 'ate_test': None, 'itr': 0, 'pehe_train': None, 'pehe_test': None, 'ate_ood': None, 'pehe_ood': None,
                      'ate_ood_list': [], 'pehe_ood_list': [], 
             'hat_yf_train': None, 'hat_ycf_train': None, 'hat_mu0_train': None, 'hat_mu1_train': None , 
             'hat_yf_test': None, 'hat_ycf_test': None, 'hat_mu0_test': None, 'hat_mu1_test': None }
 
     valid_f_bset = 99999
-    valid_f_val = {'best':99999, 'ate_train': None, 'ate_test': None, 'itr': 0, 'pehe_train': None, 'pehe_test': None, 'ate_ood': None, 'pehe_ood': None,
+    valid_f_val = {'best':99999, 'cf_error':None, 'ate_train': None, 'ate_test': None, 'itr': 0, 'pehe_train': None, 'pehe_test': None, 'ate_ood': None, 'pehe_ood': None,
                    'ate_ood_list': [], 'pehe_ood_list': [], 
             'hat_yf_train': None, 'hat_ycf_train': None, 'hat_mu0_train': None, 'hat_mu1_train': None , 
             'hat_yf_test': None, 'hat_ycf_test': None, 'hat_mu0_test': None, 'hat_mu1_test': None }
 
     valid_obj_best = 99999
-    valid_obj_val = {'best':99999, 'ate_train': None, 'ate_test': None, 'itr': 0, 'pehe_train': None, 'pehe_test': None, 'ate_ood': None, 'pehe_ood': None,
+    valid_obj_val = {'best':99999, 'cf_error':None, 'ate_train': None, 'ate_test': None, 'itr': 0, 'pehe_train': None, 'pehe_test': None, 'ate_ood': None, 'pehe_ood': None,
                      'ate_ood_list': [], 'pehe_ood_list': [], 
             'hat_yf_train': None, 'hat_ycf_train': None, 'hat_mu0_train': None, 'hat_mu1_train': None , 
             'hat_yf_test': None, 'hat_ycf_test': None, 'hat_mu0_test': None, 'hat_mu1_test': None }
 
-    final   = {'best':99999, 'ate_train': None, 'ate_test': None, 'itr': 0, 'pehe_train': None, 'pehe_test': None, 'ate_ood': None, 'pehe_ood': None,
+    final   = {'best':99999, 'cf_error':None, 'ate_train': None, 'ate_test': None, 'itr': 0, 'pehe_train': None, 'pehe_test': None, 'ate_ood': None, 'pehe_ood': None,
                'ate_ood_list': [], 'pehe_ood_list': [], 
             'hat_yf_train': None, 'hat_ycf_train': None, 'hat_mu0_train': None, 'hat_mu1_train': None , 
             'hat_yf_test': None, 'hat_ycf_test': None, 'hat_mu0_test': None, 'hat_mu1_test': None }
@@ -520,7 +523,7 @@ def trainNet(Net, sess, train_step, train_data, val_data, test_data, FLAGS, logf
                     ood_pehe_test.append(pehe(ypred1=y_pred_f_test_tmp, ypred0=y_pred_cf_test_tmp, mu1=y_pred_mu1_test_tmp, mu0=y_pred_mu0_test_tmp))
             
 
-            final = {'best':valid_f_error, 'ate_train': np.mean(y_pred_mu1) - np.mean(y_pred_mu0), 'ate_test': np.mean(y_pred_mu1_test) - np.mean(y_pred_mu0_test), 'itr': i, 
+            final = {'best':valid_f_error, 'cf_error':cf_error, 'ate_train': np.mean(y_pred_mu1) - np.mean(y_pred_mu0), 'ate_test': np.mean(y_pred_mu1_test) - np.mean(y_pred_mu0_test), 'itr': i, 
                      'pehe_train': pehe(ypred1=y_pred_f, ypred0=y_pred_cf, mu1=y_pred_mu1, mu0=y_pred_mu0), 
                      'pehe_test': pehe(ypred1=y_pred_f_test, ypred0=y_pred_cf_test, mu1=y_pred_mu1_test, mu0=y_pred_mu0_test),
                      'ate_ood': ate_ood, 'pehe_ood':pehe_ood,
@@ -529,7 +532,7 @@ def trainNet(Net, sess, train_step, train_data, val_data, test_data, FLAGS, logf
             
             if f_error < train_f_bset:
                 train_f_bset = f_error
-                train_f_val = {'best':f_error, 'ate_train': np.mean(y_pred_mu1) - np.mean(y_pred_mu0), 'ate_test': np.mean(y_pred_mu1_test) - np.mean(y_pred_mu0_test), 'itr': i,
+                train_f_val = {'best':f_error, 'cf_error':cf_error, 'ate_train': np.mean(y_pred_mu1) - np.mean(y_pred_mu0), 'ate_test': np.mean(y_pred_mu1_test) - np.mean(y_pred_mu0_test), 'itr': i,
                            'pehe_train': pehe(ypred1=y_pred_f, ypred0=y_pred_cf, mu1=y_pred_mu1, mu0=y_pred_mu0), 
                            'pehe_test': pehe(ypred1=y_pred_f_test, ypred0=y_pred_cf_test, mu1=y_pred_mu1_test, mu0=y_pred_mu0_test), 
                             'ate_ood': ate_ood, 'pehe_ood':pehe_ood,  
@@ -539,7 +542,7 @@ def trainNet(Net, sess, train_step, train_data, val_data, test_data, FLAGS, logf
 
             if obj_loss < train_obj_best:
                 train_obj_best = obj_loss
-                train_obj_val = {'best':obj_loss, 'ate_train': np.mean(y_pred_mu1) - np.mean(y_pred_mu0), 'ate_test': np.mean(y_pred_mu1_test) - np.mean(y_pred_mu0_test), 'itr': i,
+                train_obj_val = {'best':obj_loss, 'cf_error':cf_error, 'ate_train': np.mean(y_pred_mu1) - np.mean(y_pred_mu0), 'ate_test': np.mean(y_pred_mu1_test) - np.mean(y_pred_mu0_test), 'itr': i,
                            'pehe_train': pehe(ypred1=y_pred_f, ypred0=y_pred_cf, mu1=y_pred_mu1, mu0=y_pred_mu0), 
                            'pehe_test': pehe(ypred1=y_pred_f_test, ypred0=y_pred_cf_test, mu1=y_pred_mu1_test, mu0=y_pred_mu0_test), 
                            'ate_ood': ate_ood, 'pehe_ood':pehe_ood,
@@ -549,7 +552,7 @@ def trainNet(Net, sess, train_step, train_data, val_data, test_data, FLAGS, logf
                 
             if valid_f_error < valid_f_bset:
                 valid_f_bset = valid_f_error
-                valid_f_val = {'best':valid_f_error, 'ate_train': np.mean(y_pred_mu1) - np.mean(y_pred_mu0), 'ate_test': np.mean(y_pred_mu1_test) - np.mean(y_pred_mu0_test), 'itr': i,
+                valid_f_val = {'best':valid_f_error, 'cf_error':cf_error, 'ate_train': np.mean(y_pred_mu1) - np.mean(y_pred_mu0), 'ate_test': np.mean(y_pred_mu1_test) - np.mean(y_pred_mu0_test), 'itr': i,
                            'pehe_train': pehe(ypred1=y_pred_f, ypred0=y_pred_cf, mu1=y_pred_mu1, mu0=y_pred_mu0), 
                            'pehe_test': pehe(ypred1=y_pred_f_test, ypred0=y_pred_cf_test, mu1=y_pred_mu1_test, mu0=y_pred_mu0_test), 
                             'ate_ood': ate_ood, 'pehe_ood':pehe_ood,  
@@ -559,7 +562,7 @@ def trainNet(Net, sess, train_step, train_data, val_data, test_data, FLAGS, logf
 
             if valid_obj < valid_obj_best:
                 valid_obj_best = valid_obj
-                valid_obj_val = {'best':valid_obj, 'ate_train': np.mean(y_pred_mu1) - np.mean(y_pred_mu0), 'ate_test': np.mean(y_pred_mu1_test) - np.mean(y_pred_mu0_test), 'itr': i,
+                valid_obj_val = {'best':valid_obj, 'cf_error':cf_error, 'ate_train': np.mean(y_pred_mu1) - np.mean(y_pred_mu0), 'ate_test': np.mean(y_pred_mu1_test) - np.mean(y_pred_mu0_test), 'itr': i,
                            'pehe_train': pehe(ypred1=y_pred_f, ypred0=y_pred_cf, mu1=y_pred_mu1, mu0=y_pred_mu0), 
                            'pehe_test': pehe(ypred1=y_pred_f_test, ypred0=y_pred_cf_test, mu1=y_pred_mu1_test, mu0=y_pred_mu0_test), 
                            'ate_ood': ate_ood, 'pehe_ood':pehe_ood,
@@ -639,8 +642,12 @@ def run(exp, args, dataDir, resultDir, train, val, test, device):
         test_df_ood = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood_test]}/test.csv')
         print(dataDir + f'{exp}/ood_{brdc[args.ood_test]}/test.csv')
         test_ood = CausalDataset(test_df_ood, variables = ['u','x','v','xs','z','p','s','m','t','g','y','f','c'], observe_vars=['v','x','xs'])
-
-        train, val, test, ood_test_dict = run_Reg(exp, args, dataDir, resultDir, train, val, test, test_ood, device, ood_test_dict) 
+        if args.ivreg == 1:
+            
+            train, val, test, ood_test_dict = run_Reg(exp, args, dataDir, resultDir, train, val, test, test_ood, device, ood_test_dict)
+        elif args.ivreg == 0:
+            print('ivreg 0')
+            train_, val_, test_, ood_test_dict = run_Reg(exp, args, dataDir, resultDir, train, val, test, test_ood, device, ood_test_dict)
     
     try:
         train.to_numpy()

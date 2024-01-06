@@ -93,6 +93,12 @@
 
 # python synCBIV_OOD.py --iter=20000 --lrate=0.002 --oodtestall=1 --num_reps=20 --des_str='/1227_lr=0.002_reps=20_CFR_v0/' --ood=-3.0 --ood_test=3.0 --version=0
 
-python synCBIV_OOD_Aggr.py --iter=20000 --lrate=0.001 --oodtestall=1 --num_reps=20 --des_str='/1228_lr=0.001_reps=20_v1_split/' --env_str='[-1.3,3.0]' --ood_test=-3.0 --version=1 --use_gpu=0 &
-python synCBIV_OOD_Aggr.py --iter=20000 --lrate=0.002 --oodtestall=1 --num_reps=20 --des_str='/1228_lr=0.002_reps=20_v1_split/' --env_str='[-1.3,3.0]' --ood_test=-3.0 --version=1 --use_gpu=0 &
-python synCBIV_OOD_Aggr.py --iter=20000 --lrate=0.003 --oodtestall=1 --num_reps=20 --des_str='/1228_lr=0.003_reps=20_v1_split/' --env_str='[-1.3,3.0]' --ood_test=-3.0 --version=1 --use_gpu=0 &
+# python synCBIV_OOD_Aggr.py --iter=20000 --lrate=0.001 --oodtestall=1 --num_reps=20 --des_str='/1228_lr=0.001_reps=20_v1_split/' --env_str='[-1.3,3.0]' --ood_test=-3.0 --version=1 --use_gpu=0 &
+# python synCBIV_OOD_Aggr.py --iter=20000 --lrate=0.002 --oodtestall=1 --num_reps=20 --des_str='/1228_lr=0.002_reps=20_v1_split/' --env_str='[-1.3,3.0]' --ood_test=-3.0 --version=1 --use_gpu=0 &
+# python synCBIV_OOD_Aggr.py --iter=20000 --lrate=0.003 --oodtestall=1 --num_reps=20 --des_str='/1228_lr=0.003_reps=20_v1_split/' --env_str='[-1.3,3.0]' --ood_test=-3.0 --version=1 --use_gpu=0 &
+
+# # 1220 使用V1 synCBIV_OOD.py进行训练（onestage Reg加入OOD）
+# python synCBIV_OOD.py --iter=20000 --lrate=0.001 --oodtestall=1 --num_reps=20 --des_str='/1220_lr=0.001_reps=20_v1/' --ood=3.0 --ood_test=-3.0 &
+# python synCBIV_OOD.py --iter=20000 --lrate=0.002 --oodtestall=1 --num_reps=20 --des_str='/1220_lr=0.002_reps=20_v1/' --ood=3.0 --ood_test=-3.0 &
+# python synCBIV_OOD.py --iter=20000 --lrate=0.001 --oodtestall=1 --num_reps=20 --des_str='/1220_lr=0.001_reps=20_v1/' --ood=-3.0 --ood_test=3.0 &
+# python synCBIV_OOD.py --iter=20000 --lrate=0.002 --oodtestall=1 --num_reps=20 --des_str='/1220_lr=0.002_reps=20_v1/' --ood=-3.0 --ood_test=3.0 & 

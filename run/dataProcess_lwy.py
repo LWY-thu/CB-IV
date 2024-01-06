@@ -10,9 +10,10 @@ sys.path.append(r"../")
 sys.path.append(r"../../")
 sys.path.append('/home/wyliu/code/CB-IV')
 from utils import * 
-from utils import log, CausalDataset, syn_data_generator
+from utils import log, CausalDataset, syn_data_generator_v2
+# from utils.syn_data_generator_v2 import Syn_Generator_LWY
 # from module.SynCBIV import run as run_SynCBIV
-from module.SynCBIV_OOD import run as run_SynCBIV
+# from module.SynCBIV_OOD import run as run_SynCBIV
 from module.Regression_OOD import run as run_Reg
 
 os.environ["CUDA_VISIBLE_DEVICES"] = '2'
@@ -41,46 +42,47 @@ def run(args):
                                  seed_coef=10,
                                  details=1,
                                  storage_path=args.storage_path)
-    # Syn_2442.run(n=args.num, num_reps=args.num_reps)
+    Syn_2442.run(n=args.num, num_reps=args.num_reps)
 
     Datasets = [Syn_2442]
 
     ''' bias rate 1'''
-    br = [-3.0, -2.5, -2.0, -1.5, -1.3, 1.3, 1.5, 2.0, 2.5, 3.0]
+    br = [-3.0, -2.5, -2.0, -1.5, -1.3,0.0, 1.3, 1.5, 2.0, 2.5, 3.0]
     brdc = {-3.0: 'n30', -2.5:'n25', -2.0:'n20', -1.5:'n15', -1.3:'n13', 1.3:'p13', 1.5:'p15', 2.0:'p20', 2.5:'p25', 3.0:'p30', 0.0:'0'}
  
-    for exp in range(args.num_reps):
-        for r in br:
-            # run vx
-            for mode in ['vx']:
-                data = Datasets[0]
-                which_benchmark = data.which_benchmark
-                which_dataset = data.which_dataset
-                args.num_reps = 10
-                args.mV = data.mV
-                args.mX = data.mX
-                args.mU = data.mU
-                args.mXs = data.mXs
-                args.mode = mode
+    # for exp in range(args.num_reps):
+    #     print("exp: ", exp)
+    #     for r in br:
+    #         # run vx
+    #         for mode in ['vx']:
+    #             data = Datasets[0]
+    #             which_benchmark = data.which_benchmark
+    #             which_dataset = data.which_dataset
+    #             args.num_reps = 10
+    #             args.mV = data.mV
+    #             args.mX = data.mX
+    #             args.mU = data.mU
+    #             args.mXs = data.mXs
+    #             args.mode = mode
 
-                resultDir = args.storage_path + f'/results/{which_benchmark}_{which_dataset}/'
-                dataDir = f'{args.storage_path}/data/{which_benchmark}/{which_dataset}/'
-                os.makedirs(os.path.dirname(resultDir), exist_ok=True)
-                logfile = f'{resultDir}/log.txt'
+    #             resultDir = args.storage_path + f'/results/{which_benchmark}_{which_dataset}/'
+    #             dataDir = f'{args.storage_path}/data/{which_benchmark}/{which_dataset}/'
+    #             os.makedirs(os.path.dirname(resultDir), exist_ok=True)
+    #             logfile = f'{resultDir}/log.txt'
 
-                if args.rewrite_log:
-                    f = open(logfile,'w')
-                    f.close()
+    #             if args.rewrite_log:
+    #                 f = open(logfile,'w')
+    #                 f.close()
 
-                train_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[r]}/train.csv')
-                val_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[r]}/val.csv')
-                test_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[r]}/test.csv')
+    #             train_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[r]}/train.csv')
+    #             val_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[r]}/val.csv')
+    #             test_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[r]}/test.csv')
                                                             
-                train = CausalDataset(train_df, variables = ['v','u','x','xs','z','p','s','m','t','g','y','f','c'])
-                val = CausalDataset(val_df, variables = ['v','u','x','xs','z','p','s','m','t','g','y','f','c'])
-                test = CausalDataset(test_df, variables = ['v','u','x','xs','z','p','s','m','t','g','y','f','c'])
+    #             train = CausalDataset(train_df, variables = ['v','u','x','xs','z','p','s','m','t','g','y','f','c'])
+    #             val = CausalDataset(val_df, variables = ['v','u','x','xs','z','p','s','m','t','g','y','f','c'])
+    #             test = CausalDataset(test_df, variables = ['v','u','x','xs','z','p','s','m','t','g','y','f','c'])
 
-                train,val,test = run_Reg(exp, args, dataDir, resultDir, train, val, test, device, r)   
+    #             train,val,test = run_Reg(exp, args, dataDir, resultDir, train, val, test, device, r)   
 
 
 
@@ -118,7 +120,7 @@ if __name__ == "__main__":
     # About Regression_t
     argparser.add_argument('--regt_batch_size',default=500,type=int,help='The size of one batch')
     argparser.add_argument('--regt_lr',default=0.05,type=float,help='The learning rate')
-    argparser.add_argument('--regt_num_epoch',default=10,type=int,help='The num of total epoch')
+    argparser.add_argument('--regt_num_epoch',default=5,type=int,help='The num of total epoch')
     args = argparser.parse_args()
 
     

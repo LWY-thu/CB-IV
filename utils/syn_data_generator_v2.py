@@ -38,7 +38,7 @@ class Syn_Generator_LWY(object):
         assert mV<=mX, 'Assume: the dimension of the IVs is less than Confounders'
         
         # coefs_t_VXU 1: Random normal generation; 2: fixed coefficient; 3: 1 coefficient
-        np.random.seed(1 * seed_coef * init_seed)
+        np.random.seed(1 * seed_coef * init_seed + 3)
         if random_coef == "True" or random_coef == "T":
             self.coefs_t_VXU = np.random.normal(size=mV + mX + mU)
         else:
@@ -47,7 +47,7 @@ class Syn_Generator_LWY(object):
             self.coefs_t_VXU = np.ones(shape=mV + mX + mU)
     
         # coefs_y_XU: 1: Random normal generation; 2: fixed coefficient; 3: 1 coefficient
-        np.random.seed(2 * seed_coef * init_seed)  # <--
+        np.random.seed(2 * seed_coef * init_seed + 5)  # <--
         if random_coef == "True" or random_coef == "T":
             self.coefs_y_XU0 = np.random.normal(size=mX+mU)
             self.coefs_y_XU1 = np.random.normal(size=mX+mU)
@@ -103,6 +103,7 @@ class Syn_Generator_LWY(object):
 
         if details:
             print('#'*30)
+            print("syn_data_generator_v2")
             print('The data path is: {}'.format(self.data_path))
             print('The ATE:')
             print('-'*30)
@@ -168,6 +169,7 @@ class Syn_Generator_LWY(object):
 
     def get_data(self, n, seed):
 
+        np.random.seed(1*seed)
         mV = self.mV
         mX = self.mX
         mU = self.mU
@@ -207,7 +209,7 @@ class Syn_Generator_LWY(object):
             T_vars = np.concatenate([V,X,U], axis=1)
         
         # 生成Treatment
-        np.random.seed(1*seed)
+        np.random.seed(2*seed)
         z = np.dot(T_vars, self.coefs_t_VXU)
         per = np.random.normal(size=n_trn)
         pi0_t1 = scipy.special.expit( self.sc*(z+self.sh+per) )
@@ -216,7 +218,7 @@ class Syn_Generator_LWY(object):
         # 计算ATE
         coef_devide_2 = 10
         coef_devide_3 = 10
-        np.random.seed(2*seed)	  
+        np.random.seed(3*seed)	  
         if self.random_coef == "True" or self.random_coef == "T" or self.use_one == "True" or self.use_one == "T":               
             mu_0 = np.dot(Y_vars**1, self.coefs_y_XU0) / (mX+mU)
             mu_1 = np.dot(Y_vars**2, self.coefs_y_XU1) / (mX+mU) + self.ate

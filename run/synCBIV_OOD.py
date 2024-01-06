@@ -30,7 +30,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 def run(args):   
     if args.use_gpu:
-        os.environ["CUDA_VISIBLE_DEVICES"] = '0'
+        os.environ["CUDA_VISIBLE_DEVICES"] = '3'
         device = torch.device('cuda' if torch.cuda.is_available() and args.use_gpu else "cpu")
     else:
         os.environ["CUDA_VISIBLE_DEVICES"] = '-1'
@@ -48,7 +48,7 @@ def run(args):
     brdc = {-3.0: 'n30', -2.5:'n25', -2.0:'n20', -1.5:'n15', -1.3:'n13', 1.3:'p13', 1.5:'p15', 2.0:'p20', 2.5:'p25', 3.0:'p30', 0.0:'0'}
 
     des_str = args.des_str
-    which_benchmark = 'SynOOD2_'+'_'.join(str(item) for item in [args.sc, args.sh, args.one, args.depX, args.depU,args.VX])
+    which_benchmark = 'SynOOD3_'+'_'.join(str(item) for item in [args.sc, args.sh, args.one, args.depX, args.depU,args.VX])
     which_dataset = '_'.join(str(item) for item in [args.mV, args.mX, args.mU, args.mXs])
     resultDir = args.storage_path + f'/results/{which_benchmark}_{which_dataset}_{args.mode}/ood{brdc[args.ood]}/'
     os.makedirs(os.path.dirname(resultDir), exist_ok=True)
@@ -80,15 +80,6 @@ def run(args):
     results_ood_pehe_tr_f = []
     results_ood_pehe_val_obj = []
     results_ood_pehe_val_f = []
-    # results_ood_earlystop = []
-    # results_ood = [results_ood_ate_direct, results_ood_pehe_direct,
-    #                results_ood_ate_cfr, results_ood_pehe_cfr,
-    #                results_ood_ate_twostage, results_ood_pehe_twostage,
-    #                results_ood_ate_cbiv, results_ood_pehe_cbiv]
-    # name_ood = ["results_ood_ate_direct", "results_ood_pehe_direct",
-    #                "results_ood_ate_cfr", "results_ood_pehe_cfr",
-    #                "results_ood_ate_twostage", "results_ood_pehe_twostage",
-    #                "results_ood_ate_cbiv", "results_ood_pehe_cbiv"]
     results_ood = [results_ood_ate_tr_obj, results_ood_ate_tr_f,
                    results_ood_ate_val_obj, results_ood_ate_val_f,
                    results_ood_pehe_tr_obj, results_ood_pehe_tr_f,
@@ -98,17 +89,21 @@ def run(args):
                    'results_ood_ate_val_obj', 'results_ood_ate_val_f',
                    'results_ood_pehe_tr_obj', 'results_ood_pehe_tr_f',
                    'results_ood_pehe_val_obj', 'results_ood_pehe_val_f']
+    
     alpha = args.syn_alpha
     for exp in range(args.num_reps):
+        exp = exp + args.start_reps
         # # load data v0
-        train_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood]}/train.csv')
+        # train_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood]}/train.csv')
         # val_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood]}/{args.mode}/val.csv')
         # test_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood]}/{args.mode}/test.csv')
 
         # load data v1
-        # train_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood]}/train.csv')
+        train_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood]}/train.csv')
+        val_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood]}/val.csv')
+        test_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood]}/test.csv')
 
-        train_df, val_df, test_df = split_data(train_df)
+        # train_df, val_df, test_df = split_data(train_df)
 
         train = CausalDataset(train_df, variables = ['u','x','v','xs','z','p','s','m','t','g','y','f','c'], observe_vars=['v','x','xs'])
         val = CausalDataset(val_df, variables = ['u','x','v','xs','z','p','s','m','t','g','y','f','c'], observe_vars=['v','x','xs'])
@@ -124,7 +119,7 @@ def run(args):
         res_pehe_list = []
         res_loss_list = []
                 
-        args.syn_twoStage = False
+        args.syn_twoStage = True
         args.syn_alpha = alpha
         start_time = time.time()
         train_obj_val, train_f_val, valid_obj_val, valid_f_val, final= run_SynCBIV(exp, args, dataDir, resultDir, train, val, test, device)
@@ -146,10 +141,15 @@ def run(args):
                                          valid_obj_val['pehe_train'],valid_obj_val['pehe_test'], valid_obj_val['pehe_ood'],
                                          valid_f_val['pehe_train'],valid_f_val['pehe_test'], valid_f_val['pehe_ood']
                                          ]
-        res_loss_list = res_loss_list + [train_obj_val['best'],
+        res_loss_list = res_loss_list + [
+                                        train_obj_val['best'],
+                                        train_obj_val['cf_error'],
                                        train_f_val['best'],
+                                       train_f_val['cf_error'],
                                        valid_obj_val['best'],
+                                       valid_obj_val['cf_error'],
                                        valid_f_val['best'],
+                                       valid_f_val['cf_error'],
                                        ]
         if args.oodtestall ==1 :
             results_ood_ate_tr_obj.append(train_obj_val['ate_ood_list'])
@@ -187,13 +187,13 @@ def run(args):
 
     
     res_ate_df = pd.DataFrame(np.array(results_ate),
-                        columns=[ alpha+data_cls for alpha in ['tr_obj', 'tr_f', ' val_obf', ' val_f'] for data_cls in ['_tr', '_te', '_ood']]).round(4)
+                        columns=[ alpha+data_cls for alpha in ['tr_obj', 'tr_f', ' val_obj', ' val_f'] for data_cls in ['_tr', '_te', '_ood']]).round(4)
     res_ate_df.to_csv(resultDir + f'CBIV_{args.mode}_ate_earlyresult.csv', index=False)
     results_pehe = pd.DataFrame(np.array(results_pehe),
-                        columns=[ alpha+data_cls for alpha in ['tr_obj', 'tr_f', ' val_obf', ' val_f'] for data_cls in ['_tr', '_te', '_ood']]).round(4)
+                        columns=[ alpha+data_cls for alpha in ['tr_obj', 'tr_f', ' val_obj', ' val_f'] for data_cls in ['_tr', '_te', '_ood']]).round(4)
     results_pehe.to_csv(resultDir + f'CBIV_{args.mode}_pehe_earlyresult.csv', index=False)
     res_loss_df = pd.DataFrame(np.array(results_loss),
-                        columns=[ 'train_obj', 'train_f', ' valid_obf', ' valid_f']).round(4)
+                        columns=[ 'train_obj', '_cf', 'train_f', '_cf', ' valid_obj',' _cf', ' valid_f',' _cf']).round(4)
     res_loss_df.to_csv(resultDir + f'CBIV_{args.mode}_loss.csv', index=False)
 
     
@@ -213,9 +213,11 @@ if __name__ == "__main__":
     argparser.add_argument('--oodtestall',default=0,type=int,help='The random seed')
     argparser.add_argument('--iter',default=3000,type=int,help='The num of iterations')
     argparser.add_argument('--version',default=1,type=int,help='The version')
+    argparser.add_argument('--ivreg',default=1,type=int,help='The version')
     # About data setting ~~~~
     argparser.add_argument('--num',default=10000,type=int,help='The num of train\val\test dataset')
     argparser.add_argument('--num_reps',default=100,type=int,help='The num of train\val\test dataset')
+    argparser.add_argument('--start_reps',default=0,type=int,help='The start of train\val\test dataset')
     argparser.add_argument('--ate',default=0,type=float,help='The ate of constant')
     argparser.add_argument('--sc',default=1,type=float,help='The sc')
     argparser.add_argument('--sh',default=0,type=float,help='The sh')

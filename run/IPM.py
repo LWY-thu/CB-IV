@@ -15,6 +15,24 @@ import torch
 os.environ["CUDA_VISIBLE_DEVICES"] = '1'
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
+def mmd2_lin_ood(Xc,Xt,p,t_mean=0.5):
+    ''' Linear MMD '''
+
+    # it = tf.where(t>=t_mean)[:,0]
+    # ic = tf.where(t<t_mean)[:,0]
+
+    # Xc = tf.gather(X,ic)
+    # Xt = tf.gather(X,it)
+    Xc = tf.convert_to_tensor(Xc, dtype=tf.float32)
+    Xt = tf.convert_to_tensor(Xt, dtype=tf.float32)
+
+    mean_control = tf.reduce_mean(Xc,reduction_indices=0)
+    mean_treated = tf.reduce_mean(Xt,reduction_indices=0)
+
+    mmd = tf.reduce_sum(tf.square(2.0*p*mean_treated - 2.0*(1.0-p)*mean_control))
+
+    return mmd
+
 def mmd2_rbf_ood(Xc,Xt,p,sig):
     """ Computes the l2-RBF MMD for X given t """
 
@@ -119,52 +137,52 @@ def run(args):
     os.makedirs(os.path.dirname(resultDir), exist_ok=True)
     logfile = f'{resultDir}/log.txt'
     
-    exp=50
-    train_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood]}/{args.mode}/train.csv')
-    val_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood]}/{args.mode}/val.csv')
-    test_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood]}/{args.mode}/test.csv')
-    train = CausalDataset(train_df, variables = ['u','x','v','xs','z','p','s','m','t','g','y','f','c'], observe_vars=['v','x','xs'])
-    val = CausalDataset(val_df, variables = ['u','x','v','xs','z','p','s','m','t','g','y','f','c'], observe_vars=['v','x','xs'])
-    test = CausalDataset(test_df, variables = ['u','x','v','xs','z','p','s','m','t','g','y','f','c'], observe_vars=['v','x','xs'])
-
-    x_list = [np.concatenate((train.x, train.xs), 1), 
-                np.concatenate((val.x, val.xs), 1), 
-                np.concatenate((test.x, test.xs), 1)]
-
-    train = {'x':x_list[0],
-            't':train.t,
-            's':train.s,
-            'g':train.g,
-            'yf':train.y,
-            'ycf':train.f}
-    val = {'x':x_list[1],
-            't':val.t,
-            's':val.s,
-            'g':val.g,
-            'yf':val.y,
-            'ycf':val.f}
-    test = {'x':x_list[2],
-            't':test.t,
-            's':test.s,
-            'g':test.g,
-            'yf':test.y,
-            'ycf':test.f}
+    
 
     wass_dist = []
-    mmd_dist = []
-    results_ood = [wass_dist, mmd_dist]
-    name_ood = ["wass_dist", "mmd_dist"]
-    for exp in range(3): 
+    wass2_dist = []
+    mmd2_rbf_dist = []
+    
+    results_ood = [wass_dist, wass2_dist, mmd2_rbf_dist]
+    name_ood = ["wass_dist", "wass2_dist", 'mmd2_rbf_dist']
+    for exp in range(args.num_reps): 
+        print(dataDir + f'{exp}/ood_{brdc[args.ood]}/train.csv')
+        train_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood]}/train.csv')
+        val_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood]}/val.csv')
+        test_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood]}/test.csv')
+        train = CausalDataset(train_df, variables = ['u','x','v','xs','z','p','s','m','t','g','y','f','c'], observe_vars=['v','x','xs'])
+        val = CausalDataset(val_df, variables = ['u','x','v','xs','z','p','s','m','t','g','y','f','c'], observe_vars=['v','x','xs'])
+        test = CausalDataset(test_df, variables = ['u','x','v','xs','z','p','s','m','t','g','y','f','c'], observe_vars=['v','x','xs'])
+
+        x_list = [np.concatenate((train.x, train.xs), 1), 
+                    np.concatenate((val.x, val.xs), 1), 
+                    np.concatenate((test.x, test.xs), 1)]
+
+        train = {'x':x_list[0],
+                't':train.t,
+                's':train.s,
+                'g':train.g,
+                'yf':train.y,
+                'ycf':train.f}
+        val = {'x':x_list[1],
+                't':val.t,
+                's':val.s,
+                'g':val.g,
+                'yf':val.y,
+                'ycf':val.f}
+        test = {'x':x_list[2],
+                't':test.t,
+                's':test.s,
+                'g':test.g,
+                'yf':test.y,
+                'ycf':test.f}
         l1 = []
         l2 = []
+        l3 = []
         for r in br:    
-            train_df_ood = pd.read_csv(dataDir + f'{exp}/ood_{brdc[r]}/{args.mode}/train.csv')
-            # val_df_ood = pd.read_csv(dataDir + f'{exp}/{args.mode}/ood_{brdc[args.ood]}/val.csv')
-            # test_df_ood = pd.read_csv(dataDir + f'{exp}/{args.mode}/ood_{brdc[args.ood]}/test.csv')
+            train_df_ood = pd.read_csv(dataDir + f'{exp}/ood_{brdc[r]}/train.csv')
             train_ood = CausalDataset(train_df_ood, variables = ['u','x','v','xs','z','p','s','m','t','g','y','f','c'], observe_vars=['v','x','xs'])
-            # val_ood = CausalDataset(val_df_ood, variables = ['u','x','v','xs','z','p','s','m','t','g','y','f','c'], observe_vars=['v','x','xs'])
-            # test_ood = CausalDataset(test_df_ood, variables = ['u','x','v','xs','z','p','s','m','t','g','y','f','c'], observe_vars=['v','x','xs'])
-            print(dataDir + f'{exp}/{args.mode}/ood_{brdc[r]}/train.csv')
+            print(dataDir + f'{exp}/ood_{brdc[r]}/train.csv')
             x_list = [np.concatenate((train_ood.x, train_ood.xs), 1)]
 
             train_ood = {'x':x_list[0],
@@ -174,7 +192,7 @@ def run(args):
                     'yf':train_ood.y,
                     'ycf':train_ood.f}
             p_ipm = 0.5
-            imb_dist, imB_mat = wasserstein_ood(train['x'],train_ood['x'],p_ipm)
+            imb_dist, imB_mat = wasserstein_ood(train['x'],train_ood['x'],p_ipm,lam=10,its=10,sq=False,backpropT=False)
             # 创建 TensorFlow 会话
             with tf.Session() as sess:
                 # 执行计算图并获取张量的值
@@ -183,15 +201,27 @@ def run(args):
             l1.append(tensor_value)
 
             p_ipm = 0.5
+            imb_dist_wass2, imB_mat = wasserstein_ood(train['x'],train_ood['x'],p_ipm,lam=10,its=10,sq=True,backpropT=False)
+            # 创建 TensorFlow 会话
+            with tf.Session() as sess:
+                # 执行计算图并获取张量的值
+                tensor_value_wass2 = sess.run(imb_dist_wass2)
+            print(tensor_value_wass2)
+            l2.append(tensor_value_wass2)
+
+            p_ipm = 0.5
             imb_dist_mmd = mmd2_rbf_ood(train['x'],train_ood['x'],p_ipm, 0.1)
             # 创建 TensorFlow 会话
             with tf.Session() as sess:
                 # 执行计算图并获取张量的值
                 tensor_value_mmd = sess.run(imb_dist_mmd)
             print(tensor_value_mmd)
-            l2.append(tensor_value_mmd)
+            l3.append(tensor_value_mmd)
+
+
         wass_dist.append(l1)
-        mmd_dist.append(l2)
+        wass2_dist.append(l2)
+        mmd2_rbf_dist.append(l3)
 
 
     for res, name in zip(results_ood, name_ood):
@@ -214,7 +244,7 @@ if __name__ == "__main__":
     argparser.add_argument('--use_gpu',default=True,type=bool,help='The use of GPU')
     # About data setting ~~~~
     argparser.add_argument('--num',default=10000,type=int,help='The num of train\val\test dataset')
-    argparser.add_argument('--num_reps',default=10,type=int,help='The num of train\val\test dataset')
+    argparser.add_argument('--num_reps',default=20,type=int,help='The num of train\val\test dataset')
     argparser.add_argument('--ate',default=0,type=float,help='The ate of constant')
     argparser.add_argument('--sc',default=1,type=float,help='The sc')
     argparser.add_argument('--sh',default=0,type=float,help='The sh')
