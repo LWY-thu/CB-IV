@@ -78,6 +78,7 @@ def get_FLAGS():
     tf.app.flags.DEFINE_float('regt_lr', 0.05, """Validation part. """)
     tf.app.flags.DEFINE_integer('regt_num_epoch', 300, """Number of iterations. """)
     tf.app.flags.DEFINE_integer('version', 1, """Version. """)
+
     # About IRM  
     tf.app.flags.DEFINE_string('env_str', '[3.0, -3.0]', 'The environment list')
 

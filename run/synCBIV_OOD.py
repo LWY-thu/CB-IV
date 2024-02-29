@@ -30,7 +30,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 def run(args):   
     if args.use_gpu:
-        os.environ["CUDA_VISIBLE_DEVICES"] = '3'
+        os.environ["CUDA_VISIBLE_DEVICES"] = '2'
         device = torch.device('cuda' if torch.cuda.is_available() and args.use_gpu else "cpu")
     else:
         os.environ["CUDA_VISIBLE_DEVICES"] = '-1'
@@ -48,7 +48,7 @@ def run(args):
     brdc = {-3.0: 'n30', -2.5:'n25', -2.0:'n20', -1.5:'n15', -1.3:'n13', 1.3:'p13', 1.5:'p15', 2.0:'p20', 2.5:'p25', 3.0:'p30', 0.0:'0'}
 
     des_str = args.des_str
-    which_benchmark = 'SynOOD3_'+'_'.join(str(item) for item in [args.sc, args.sh, args.one, args.depX, args.depU,args.VX])
+    which_benchmark = f'SynOOD{args.data_version}_'+'_'.join(str(item) for item in [args.sc, args.sh, args.one, args.depX, args.depU,args.VX])
     which_dataset = '_'.join(str(item) for item in [args.mV, args.mX, args.mU, args.mXs])
     resultDir = args.storage_path + f'/results/{which_benchmark}_{which_dataset}_{args.mode}/ood{brdc[args.ood]}/'
     os.makedirs(os.path.dirname(resultDir), exist_ok=True)
@@ -122,7 +122,7 @@ def run(args):
         args.syn_twoStage = True
         args.syn_alpha = alpha
         start_time = time.time()
-        train_obj_val, train_f_val, valid_obj_val, valid_f_val, final= run_SynCBIV(exp, args, dataDir, resultDir, train, val, test, device)
+        train_obj_val, train_f_val, valid_obj_val, valid_f_val, ood_val, final= run_SynCBIV(exp, args, dataDir, resultDir, train, val, test, device)
         end_time = time.time()
         run_time = end_time - start_time
         logfile = f'{resultDir}/log.txt'
@@ -134,12 +134,14 @@ def run(args):
         res_ate_list = res_ate_list + [train_obj_val['ate_train'],train_obj_val['ate_test'], train_obj_val['ate_ood'],
                                        train_f_val['ate_train'],train_f_val['ate_test'], train_f_val['ate_ood'],
                                        valid_obj_val['ate_train'],valid_obj_val['ate_test'], valid_obj_val['ate_ood'],
-                                       valid_f_val['ate_train'],valid_f_val['ate_test'], valid_f_val['ate_ood']
+                                       valid_f_val['ate_train'],valid_f_val['ate_test'], valid_f_val['ate_ood'],
+                                       ood_val['ate_train'],ood_val['ate_test'], ood_val['ate_ood']
                                        ]
         res_pehe_list = res_pehe_list + [train_obj_val['pehe_train'],train_obj_val['pehe_test'], train_obj_val['pehe_ood'],
                                          train_f_val['pehe_train'],train_f_val['pehe_test'], train_f_val['pehe_ood'],
                                          valid_obj_val['pehe_train'],valid_obj_val['pehe_test'], valid_obj_val['pehe_ood'],
-                                         valid_f_val['pehe_train'],valid_f_val['pehe_test'], valid_f_val['pehe_ood']
+                                         valid_f_val['pehe_train'],valid_f_val['pehe_test'], valid_f_val['pehe_ood'],
+                                         ood_val['pehe_train'],ood_val['pehe_test'], ood_val['pehe_ood']
                                          ]
         res_loss_list = res_loss_list + [
                                         train_obj_val['best'],
@@ -187,10 +189,11 @@ def run(args):
 
     
     res_ate_df = pd.DataFrame(np.array(results_ate),
-                        columns=[ alpha+data_cls for alpha in ['tr_obj', 'tr_f', ' val_obj', ' val_f'] for data_cls in ['_tr', '_te', '_ood']]).round(4)
+                        columns=['tr_obj_tr', '_te', '_ood', 'tr_f_tr', '_te', '_ood', ' val_obj_tr', '_te', '_ood', ' val_f_tr', '_te', '_ood', 'pehediff_tr', '_te', '_ood']).round(4)
+                        # columns=[ alpha+data_cls for alpha in ['tr_obj', 'tr_f', ' val_obj', ' val_f', 'pehediff'] for data_cls in ['_tr', '_te', '_ood']]).round(4)
     res_ate_df.to_csv(resultDir + f'CBIV_{args.mode}_ate_earlyresult.csv', index=False)
     results_pehe = pd.DataFrame(np.array(results_pehe),
-                        columns=[ alpha+data_cls for alpha in ['tr_obj', 'tr_f', ' val_obj', ' val_f'] for data_cls in ['_tr', '_te', '_ood']]).round(4)
+                        columns=['tr_obj_tr', '_te', '_ood', 'tr_f_tr', '_te', '_ood', ' val_obj_tr', '_te', '_ood', ' val_f_tr', '_te', '_ood', 'pehediff_tr', '_te', '_ood']).round(4)
     results_pehe.to_csv(resultDir + f'CBIV_{args.mode}_pehe_earlyresult.csv', index=False)
     res_loss_df = pd.DataFrame(np.array(results_loss),
                         columns=[ 'train_obj', '_cf', 'train_f', '_cf', ' valid_obj',' _cf', ' valid_f',' _cf']).round(4)
@@ -210,13 +213,12 @@ if __name__ == "__main__":
     argparser.add_argument('--rewrite_log',default=False,type=bool,help='Whether rewrite log file')
     argparser.add_argument('--use_gpu',default=1,type=int,help='The use of GPU')
     argparser.add_argument('--des_str',default='/_/',type=str,help='The description of this running')
-    argparser.add_argument('--oodtestall',default=0,type=int,help='The random seed')
-    argparser.add_argument('--iter',default=3000,type=int,help='The num of iterations')
+    argparser.add_argument('--oodtestall',default=1,type=int,help='The random seed')
     argparser.add_argument('--version',default=1,type=int,help='The version')
     argparser.add_argument('--ivreg',default=1,type=int,help='The version')
     # About data setting ~~~~
     argparser.add_argument('--num',default=10000,type=int,help='The num of train\val\test dataset')
-    argparser.add_argument('--num_reps',default=100,type=int,help='The num of train\val\test dataset')
+    argparser.add_argument('--num_reps',default=10,type=int,help='The num of train\val\test dataset')
     argparser.add_argument('--start_reps',default=0,type=int,help='The start of train\val\test dataset')
     argparser.add_argument('--ate',default=0,type=float,help='The ate of constant')
     argparser.add_argument('--sc',default=1,type=float,help='The sc')
@@ -230,11 +232,33 @@ if __name__ == "__main__":
     argparser.add_argument('--mU',default=4,type=int,help='The dim of Unobserved confounding variables U')
     argparser.add_argument('--mXs',default=2,type=int,help='The dim of Noise variables X')
     argparser.add_argument('--storage_path',default='../../Data/',type=str,help='The dir of data storage')
+    argparser.add_argument('--data_version',default=2,type=int,help='')
     # Syn
     argparser.add_argument('--syn_alpha',default=0.01,type=float,help='')
     argparser.add_argument('--syn_lambda',default=0.001,type=float,help='')
     argparser.add_argument('--syn_twoStage',default=True,type=bool,help='')
+    # About model setting
+    argparser.add_argument('--n_in',default=3,type=int,help='')
+    argparser.add_argument('--n_out',default=5,type=int,help='')
+    argparser.add_argument('--dropout_in',default=1.0,type=float,help='') # done
+    argparser.add_argument('--dropout_out',default=1.0,type=float,help='') # done
+    argparser.add_argument('--nonlin',default='elu',type=str,help='')
     argparser.add_argument('--lrate',default=0.001,type=float,help='learning rate')
+    argparser.add_argument('--batch_size',default=256,type=int,help='')
+    argparser.add_argument('--dim_in',default=256,type=int,help='')
+    argparser.add_argument('--dim_out',default=256,type=int,help='')
+
+    argparser.add_argument('--batch_norm',default=0,type=int,help='')
+    argparser.add_argument('--normalization',default='none',type=str,help='')
+    argparser.add_argument('--rbf_sigma',default=0.1,type=float,help='')
+    argparser.add_argument('--iterations',default=3000,type=int,help='The num of iterations')
+    argparser.add_argument('--weight_init',default=0.1,type=float,help='')
+    argparser.add_argument('--lrate_decay',default=0.97,type=float,help='')
+    argparser.add_argument('--wass_iterations',default=10,type=int,help='')
+    argparser.add_argument('--wass_lambda',default=10.0,type=float,help='')
+    argparser.add_argument('--wass_bpt',default=1,type=int,help='')
+    argparser.add_argument('--varsel',default=0,type=int,help='')
+
     # About Debug or Show
     argparser.add_argument('--verbose',default=1,type=int,help='The level of verbose')
     argparser.add_argument('--epoch_show',default=5,type=int,help='The epochs of show time')

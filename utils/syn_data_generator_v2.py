@@ -90,7 +90,7 @@ class Syn_Generator_LWY(object):
         return L
 
     def set_path(self,details):
-        which_benchmark = 'SynOOD3_'+'_'.join(str(item) for item in [self.sc, self.sh, self.one, self.depX, self.depU,self.VX])
+        which_benchmark = 'SynOOD1_biny_'+'_'.join(str(item) for item in [self.sc, self.sh, self.one, self.depX, self.depU,self.VX])
         print(which_benchmark)
         data_path = self.storage_path+'/data/'+which_benchmark
         os.makedirs(os.path.dirname(data_path), exist_ok=True)

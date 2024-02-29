@@ -18,32 +18,37 @@ def get_FLAGS():
     ''' Define parameter flags '''
     FLAGS = tf.app.flags.FLAGS
 
-    tf.app.flags.DEFINE_integer('lrate_decay_num', 100, """NUM_ITERATIONS_PER_DECAY. """)
+    tf.app.flags.DEFINE_float('e_first', 3.0, """1 """)
+    tf.app.flags.DEFINE_float('e_second', -1.5, """. """)
+    tf.app.flags.DEFINE_float('e_first_ratio', 1.0, """. """)
+    tf.app.flags.DEFINE_float('e_second_ratio', 0.05, """. """)
+       
+    tf.app.flags.DEFINE_integer('lrate_decay_num', 100, """NUM_ITERATIONS_PER_DECAY. """) 
     tf.app.flags.DEFINE_integer('seed', 2021, """Seed. """)
     tf.app.flags.DEFINE_integer('debug', 0, """Debug mode. """)
     tf.app.flags.DEFINE_integer('save_rep', 0, """Save representations after training. """)
     tf.app.flags.DEFINE_integer('output_csv',0,"""Whether to save a CSV file with the results""")
     tf.app.flags.DEFINE_integer('output_delay', 100, """Number of iterations between log/loss outputs. """)
-    tf.app.flags.DEFINE_string('x_key', 'x', """Which key to use (x/xu/vxu)""")
+    tf.app.flags.DEFINE_string('x_key', 'x', """Which key to use (x/xu/vxu)""") # 没出现
     tf.app.flags.DEFINE_string('loss', 'l2', """Which loss function to use (l1/l2/log)""")
-    tf.app.flags.DEFINE_integer('n_in', 3, """Number of representation layers. """)
-    tf.app.flags.DEFINE_integer('n_out', 5, """Number of regression layers. """)
-    tf.app.flags.DEFINE_float('p_alpha', 1, """Imbalance regularization param. """)
-    tf.app.flags.DEFINE_float('p_lambda', 1e-4, """Weight decay regularization parameter. """)
+    tf.app.flags.DEFINE_integer('n_in', 3, """Number of representation layers. """) # todo
+    tf.app.flags.DEFINE_integer('n_out', 5, """Number of regression layers. """) # todo
+    tf.app.flags.DEFINE_float('p_alpha', 1, """Imbalance regularization param. """) # todo
+    tf.app.flags.DEFINE_float('p_lambda', 1e-4, """Weight decay regularization parameter. """) # todo
     tf.app.flags.DEFINE_integer('rep_weight_decay', 0, """Whether to penalize representation layers with weight decay""")
     tf.app.flags.DEFINE_float('dropout_in', 1.0, """Input layers dropout keep rate. """)
     tf.app.flags.DEFINE_float('dropout_out', 1.0, """Output layers dropout keep rate. """)
     tf.app.flags.DEFINE_string('nonlin', 'elu', """Kind of non-linearity. Default relu. """)
-    tf.app.flags.DEFINE_float('lrate', 5e-4, """Learning rate. """)
+    tf.app.flags.DEFINE_float('lrate', 5e-4, """Learning rate. """) # done
     tf.app.flags.DEFINE_float('decay', 0.3, """RMSProp decay. """)
     tf.app.flags.DEFINE_integer('batch_size', 256, """Batch size. """)
-    tf.app.flags.DEFINE_integer('dim_in', 256, """Pre-representation layer dimensions. """)
-    tf.app.flags.DEFINE_integer('dim_out', 256, """Post-representation layer dimensions. """)
-    tf.app.flags.DEFINE_integer('batch_norm', 0, """Whether to use batch normalization. """)
+    tf.app.flags.DEFINE_integer('dim_in', 384, """Pre-representation layer dimensions. """) # todo
+    tf.app.flags.DEFINE_integer('dim_out', 384, """Post-representation layer dimensions. """) # todo
+    tf.app.flags.DEFINE_integer('batch_norm', 0, """Whether to use batch normalization. """) # todo
     tf.app.flags.DEFINE_string('normalization', 'none', """How to normalize representation (after batch norm). none/bn_fixed/divide/project """)
-    tf.app.flags.DEFINE_float('rbf_sigma', 0.1, """RBF MMD sigma """)
-    tf.app.flags.DEFINE_integer('experiments', 2, """Number of experiments. """)
-    tf.app.flags.DEFINE_integer('iterations', 300, """Number of iterations. """)
+    tf.app.flags.DEFINE_float('rbf_sigma', 0.1, """RBF MMD sigma """) # 固定
+    tf.app.flags.DEFINE_integer('experiments', 2, """Number of experiments. """) # 没用
+    tf.app.flags.DEFINE_integer('iterations', 3000, """Number of iterations. """)
     tf.app.flags.DEFINE_float('weight_init', 0.1, """Weight initialization scale. """)
     tf.app.flags.DEFINE_float('lrate_decay', 0.97, """Decay of learning rate every 100 iterations """)
     tf.app.flags.DEFINE_integer('wass_iterations', 10, """Number of iterations in Wasserstein computation. """)
@@ -62,7 +67,7 @@ def get_FLAGS():
     tf.app.flags.DEFINE_string('imb_fun', 'mmd2_rbf', """Which imbalance penalty to use (mmd_lin/mmd_rbf/mmd2_lin/mmd2_rbf/lindisc/wass). """)
     tf.app.flags.DEFINE_integer('pred_output_delay', 200, """Number of iterations between prediction outputs. (-1 gives no intermediate output). """)
     tf.app.flags.DEFINE_float('val_part', 0.3, """Validation part. """)
-    tf.app.flags.DEFINE_boolean('split_output', 1, """Whether to split output layers between treated and control. """)
+    tf.app.flags.DEFINE_boolean('split_output', 1, """Whether to split output layers between treated and control. """) # todo
     tf.app.flags.DEFINE_boolean('reweight_sample', 1, """Whether to reweight sample for prediction loss with average treatment probability. """)
     tf.app.flags.DEFINE_boolean('twoStage', 1, """twoStage. """)
     tf.app.flags.DEFINE_string('f', '', 'kernel')
@@ -70,16 +75,30 @@ def get_FLAGS():
     tf.app.flags.DEFINE_integer('mV', 2, """The dim of Instrumental variables V.""")
     tf.app.flags.DEFINE_integer('mX', 4, """The dim of Confounding variables X.""")
     tf.app.flags.DEFINE_integer('mU', 4, """The dim of Unobserved confounding variables U.""")
+    tf.app.flags.DEFINE_integer('mXs', 2, """The dim of spourious variables U.""")
     tf.app.flags.DEFINE_float('ood', 0., """ood. """)
+    tf.app.flags.DEFINE_float('e2_ration', 0., """ood. """)
     tf.app.flags.DEFINE_float('ood_test', 3.0, """ood. """)
+    tf.app.flags.DEFINE_integer('iter', 300, """Number of iterations. """)
     tf.app.flags.DEFINE_integer('num_reps', 10, """The num of train\val\test dataset.""")
     tf.app.flags.DEFINE_string('des_str', '/_/', 'The description of this running')
     tf.app.flags.DEFINE_integer('use_gpu', 0, """The use of GPU. """)
-    tf.app.flags.DEFINE_integer('oodtestall', 0, """ood test all.""")
-    tf.app.flags.DEFINE_integer('iter', 300, """Number of iterations. """)
-    tf.app.flags.DEFINE_float('regt_lr', 0.05, """Validation part. """)
+    tf.app.flags.DEFINE_integer('oodtestall', 1, """ood test all.""")
     tf.app.flags.DEFINE_integer('regt_num_epoch', 300, """Number of iterations. """)
     tf.app.flags.DEFINE_integer('version', 1, """Version. """)
+    tf.app.flags.DEFINE_integer('ivreg', 1, """Version. """)
+    tf.app.flags.DEFINE_integer('num', 10000, """Version. """)
+    tf.app.flags.DEFINE_integer('start_reps', 0, """The start of train\val\test dataset. """)
+    tf.app.flags.DEFINE_integer('data_version', 2, """data version""")
+
+    # About Regression_t
+    tf.app.flags.DEFINE_integer('regt_batch_size', 500, """The size of one batch. """)
+    tf.app.flags.DEFINE_float('regt_lr', 0.05, """The learning rate. """)
+    tf.app.flags.DEFINE_integer('regt_num_epoch', 5, """The num of total epoch. """)
+
+    
+
+    
     # About IRM  
     tf.app.flags.DEFINE_string('env_str', '[3.0, -3.0]', 'The environment list')
 
@@ -98,7 +117,7 @@ class CBIV(object):
             self.nonlin = tf.nn.elu
         else:
             self.nonlin = tf.nn.relu
-        print('init 2')
+
         self._build_graph(x, s, t, y_ , p_t, FLAGS, r_alpha, r_lambda, do_in, do_out, dims)
 
     def _add_variable(self, var, name):
@@ -139,7 +158,7 @@ class CBIV(object):
         self.weights_pred   The (linear) prediction layer weights
         self.h_rep          The layer of the penalized representation
         """
-        
+
         self.x = x
         self.s = s
         self.t = t
@@ -219,18 +238,20 @@ class CBIV(object):
         else:
             h_rep_norm = 1.0*h_rep
 
-        # print("h_rep_norm_shape:",h_rep_norm.shape)
+        print("h_rep_norm_shape:",h_rep_norm.shape)
         ''' Construct ouput layers '''
         y, y0, y1, weights_out, weights_pred, _, _, _, _ = self._build_output_graph(h_rep_norm, t, dim_in, dim_out, do_out, FLAGS)
         
         if FLAGS.twoStage:
+            print('twostage')
             y = s * y1 + (1-s) * y0
 
         ''' Compute sample reweighting '''
         if FLAGS.reweight_sample:
             w_t = t/(2*p_t)
-            w_c = (1-t)/(2*1-p_t)
-            sample_weight = w_t + w_c
+            # 不一样
+            w_c = (1-t)/(2*1-p_t) 
+            sample_weight = w_t + w_c 
         else:
             sample_weight = 1.0
 
@@ -300,7 +321,7 @@ class CBIV(object):
         if FLAGS.varsel:
             self.w_proj = tf.placeholder("float", shape=[dim_input], name='w_proj')
             self.projection = weights_in[0].assign(self.w_proj)
-        print('bulid graph 3')
+
         self.output = y
         self.tot_loss = tot_error
         self.imb_loss = imb_error
@@ -376,12 +397,11 @@ class CBIV(object):
 
         return y, y0, y1, weights_out, weights_pred, weights_out0, weights_pred0, weights_out1, weights_pred1
 
-def trainNet(Net, sess, train_step, train_data, val_data, test_data, FLAGS, logfile, _logfile, exp, dataDir, resultDir, device, args):
+def trainNet(Net, sess, train_step, train_data, val_data, test_data, FLAGS, logfile, _logfile, exp, dataDir, resultDir, device, args, ood_test_dict):
     writer = SummaryWriter(resultDir + '/logs/')
     n_train = len(train_data['x'])
-    print('train net 4')
+    # print(train_data['x'].shape)
     p_treated = np.mean(train_data['t'])
-    
 
     dict_factual = {Net.x: train_data['x'], Net.s: train_data['s'], Net.t: train_data['t'], Net.y_: train_data['yf'], \
             Net.do_in: 1.0, Net.do_out: 1.0, Net.r_alpha: FLAGS.p_alpha, \
@@ -396,7 +416,7 @@ def trainNet(Net, sess, train_step, train_data, val_data, test_data, FLAGS, logf
 
     # 初始化ood数据
     ''' OOD test'''
-    br = [-3.0, -2.5, -2.0, -1.5, -1.3, 0.0, 1.3, 1.5, 2.0, 2.5, 3.0]
+    br = [-3.0, -2.5, -2.0, -1.5, -1.3, 1.3, 1.5, 2.0, 2.5, 3.0]
     brdc = {-3.0: 'n30', -2.5:'n25', -2.0:'n20', -1.5:'n15', -1.3:'n13', 1.3:'p13', 1.5:'p15', 2.0:'p20', 2.5:'p25', 3.0:'p30', 0.0:'0'}
 
 
@@ -405,30 +425,36 @@ def trainNet(Net, sess, train_step, train_data, val_data, test_data, FLAGS, logf
     objnan = False
 
     train_f_bset = 99999
-    train_f_val = {'best':99999, 'ate_train': None, 'ate_test': None, 'itr': 0, 'pehe_train': None, 'pehe_test': None, 'ate_ood': None, 'pehe_ood': None,
+    train_f_val = {'best':99999, 'cf_error':None, 'ate_train': None, 'ate_test': None, 'itr': 0, 'pehe_train': None, 'pehe_test': None, 'ate_ood': None, 'pehe_ood': None,
                    'ate_ood_list': [], 'pehe_ood_list': [], 
             'hat_yf_train': None, 'hat_ycf_train': None, 'hat_mu0_train': None, 'hat_mu1_train': None , 
             'hat_yf_test': None, 'hat_ycf_test': None, 'hat_mu0_test': None, 'hat_mu1_test': None }
 
     train_obj_best = 99999
-    train_obj_val = {'best':99999, 'ate_train': None, 'ate_test': None, 'itr': 0, 'pehe_train': None, 'pehe_test': None, 'ate_ood': None, 'pehe_ood': None,
+    train_obj_val = {'best':99999, 'cf_error':None, 'ate_train': None, 'ate_test': None, 'itr': 0, 'pehe_train': None, 'pehe_test': None, 'ate_ood': None, 'pehe_ood': None,
                      'ate_ood_list': [], 'pehe_ood_list': [], 
             'hat_yf_train': None, 'hat_ycf_train': None, 'hat_mu0_train': None, 'hat_mu1_train': None , 
             'hat_yf_test': None, 'hat_ycf_test': None, 'hat_mu0_test': None, 'hat_mu1_test': None }
 
     valid_f_bset = 99999
-    valid_f_val = {'best':99999, 'ate_train': None, 'ate_test': None, 'itr': 0, 'pehe_train': None, 'pehe_test': None, 'ate_ood': None, 'pehe_ood': None,
+    valid_f_val = {'best':99999, 'cf_error':None, 'ate_train': None, 'ate_test': None, 'itr': 0, 'pehe_train': None, 'pehe_test': None, 'ate_ood': None, 'pehe_ood': None,
                    'ate_ood_list': [], 'pehe_ood_list': [], 
             'hat_yf_train': None, 'hat_ycf_train': None, 'hat_mu0_train': None, 'hat_mu1_train': None , 
             'hat_yf_test': None, 'hat_ycf_test': None, 'hat_mu0_test': None, 'hat_mu1_test': None }
 
     valid_obj_best = 99999
-    valid_obj_val = {'best':99999, 'ate_train': None, 'ate_test': None, 'itr': 0, 'pehe_train': None, 'pehe_test': None, 'ate_ood': None, 'pehe_ood': None,
+    valid_obj_val = {'best':99999, 'cf_error':None, 'ate_train': None, 'ate_test': None, 'itr': 0, 'pehe_train': None, 'pehe_test': None, 'ate_ood': None, 'pehe_ood': None,
+                     'ate_ood_list': [], 'pehe_ood_list': [], 
+            'hat_yf_train': None, 'hat_ycf_train': None, 'hat_mu0_train': None, 'hat_mu1_train': None , 
+            'hat_yf_test': None, 'hat_ycf_test': None, 'hat_mu0_test': None, 'hat_mu1_test': None }
+    
+    ood_best = 99999
+    ood_val = {'best':99999, 'cf_error':None, 'ate_train': None, 'ate_test': None, 'itr': 0, 'pehe_train': None, 'pehe_test': None, 'ate_ood': None, 'pehe_ood': None,
                      'ate_ood_list': [], 'pehe_ood_list': [], 
             'hat_yf_train': None, 'hat_ycf_train': None, 'hat_mu0_train': None, 'hat_mu1_train': None , 
             'hat_yf_test': None, 'hat_ycf_test': None, 'hat_mu0_test': None, 'hat_mu1_test': None }
 
-    final   = {'best':99999, 'ate_train': None, 'ate_test': None, 'itr': 0, 'pehe_train': None, 'pehe_test': None, 'ate_ood': None, 'pehe_ood': None,
+    final   = {'best':99999, 'cf_error':None, 'ate_train': None, 'ate_test': None, 'itr': 0, 'pehe_train': None, 'pehe_test': None, 'ate_ood': None, 'pehe_ood': None,
                'ate_ood_list': [], 'pehe_ood_list': [], 
             'hat_yf_train': None, 'hat_ycf_train': None, 'hat_mu0_train': None, 'hat_mu1_train': None , 
             'hat_yf_test': None, 'hat_ycf_test': None, 'hat_mu0_test': None, 'hat_mu1_test': None }
@@ -448,11 +474,9 @@ def trainNet(Net, sess, train_step, train_data, val_data, test_data, FLAGS, logf
 
         # IRM 训练阶段x_batch修改为x_batch = [x_batch_e1, x_batch_e2]
         if not objnan:
-            print('train net 5')
-            _, temp = sess.run([train_step, Net.tot_loss], feed_dict={Net.x: x_batch, Net.s: s_batch, Net.t: t_batch, \
+            sess.run(train_step, feed_dict={Net.x: x_batch, Net.s: s_batch, Net.t: t_batch, \
                 Net.y_: y_batch, Net.do_in: FLAGS.dropout_in, Net.do_out: FLAGS.dropout_out, \
                 Net.r_alpha: FLAGS.p_alpha, Net.r_lambda: FLAGS.p_lambda, Net.p_t: p_treated})
-
 
         ''' Project variable selection weights '''
         if FLAGS.varsel:
@@ -486,7 +510,7 @@ def trainNet(Net, sess, train_step, train_data, val_data, test_data, FLAGS, logf
             y_pred_mu1_test = sess.run(Net.output, feed_dict={Net.x: test_data['x'], Net.s: 1-test_data['s']+test_data['s'], Net.t: 1-test_data['t']+test_data['t'], Net.do_in: 1.0, Net.do_out: 1.0})
 
             
-            test_ood = args.data_dict[args.ood_test]['test']
+            test_ood = ood_test_dict[args.ood_test]
             # test_ood.to_numpy()
             # print(dataDir + f'{exp}/ood_{brdc[args.ood_test]}/{args.mode}/test.csv')
             # test_ood = CausalDataset(test_df_ood, variables = ['u','x','v','xs','z','p','s','m','t','g','y','f','c'], observe_vars=['v','x','xs'])
@@ -505,7 +529,7 @@ def trainNet(Net, sess, train_step, train_data, val_data, test_data, FLAGS, logf
 
             if FLAGS.oodtestall == 1:
                 for r in br:
-                    test = args.data_dict[r]['test']
+                    test = ood_test_dict[r]
                     test = {'x':np.concatenate((test.x, test.xs), 1),
                             't':test.t,
                             's':test.s,
@@ -520,7 +544,7 @@ def trainNet(Net, sess, train_step, train_data, val_data, test_data, FLAGS, logf
                     ood_pehe_test.append(pehe(ypred1=y_pred_f_test_tmp, ypred0=y_pred_cf_test_tmp, mu1=y_pred_mu1_test_tmp, mu0=y_pred_mu0_test_tmp))
             
 
-            final = {'best':valid_f_error, 'ate_train': np.mean(y_pred_mu1) - np.mean(y_pred_mu0), 'ate_test': np.mean(y_pred_mu1_test) - np.mean(y_pred_mu0_test), 'itr': i, 
+            final = {'best':valid_f_error, 'cf_error':cf_error, 'ate_train': np.mean(y_pred_mu1) - np.mean(y_pred_mu0), 'ate_test': np.mean(y_pred_mu1_test) - np.mean(y_pred_mu0_test), 'itr': i, 
                      'pehe_train': pehe(ypred1=y_pred_f, ypred0=y_pred_cf, mu1=y_pred_mu1, mu0=y_pred_mu0), 
                      'pehe_test': pehe(ypred1=y_pred_f_test, ypred0=y_pred_cf_test, mu1=y_pred_mu1_test, mu0=y_pred_mu0_test),
                      'ate_ood': ate_ood, 'pehe_ood':pehe_ood,
@@ -529,7 +553,7 @@ def trainNet(Net, sess, train_step, train_data, val_data, test_data, FLAGS, logf
             
             if f_error < train_f_bset:
                 train_f_bset = f_error
-                train_f_val = {'best':f_error, 'ate_train': np.mean(y_pred_mu1) - np.mean(y_pred_mu0), 'ate_test': np.mean(y_pred_mu1_test) - np.mean(y_pred_mu0_test), 'itr': i,
+                train_f_val = {'best':f_error, 'cf_error':cf_error, 'ate_train': np.mean(y_pred_mu1) - np.mean(y_pred_mu0), 'ate_test': np.mean(y_pred_mu1_test) - np.mean(y_pred_mu0_test), 'itr': i,
                            'pehe_train': pehe(ypred1=y_pred_f, ypred0=y_pred_cf, mu1=y_pred_mu1, mu0=y_pred_mu0), 
                            'pehe_test': pehe(ypred1=y_pred_f_test, ypred0=y_pred_cf_test, mu1=y_pred_mu1_test, mu0=y_pred_mu0_test), 
                             'ate_ood': ate_ood, 'pehe_ood':pehe_ood,  
@@ -539,7 +563,7 @@ def trainNet(Net, sess, train_step, train_data, val_data, test_data, FLAGS, logf
 
             if obj_loss < train_obj_best:
                 train_obj_best = obj_loss
-                train_obj_val = {'best':obj_loss, 'ate_train': np.mean(y_pred_mu1) - np.mean(y_pred_mu0), 'ate_test': np.mean(y_pred_mu1_test) - np.mean(y_pred_mu0_test), 'itr': i,
+                train_obj_val = {'best':obj_loss, 'cf_error':cf_error, 'ate_train': np.mean(y_pred_mu1) - np.mean(y_pred_mu0), 'ate_test': np.mean(y_pred_mu1_test) - np.mean(y_pred_mu0_test), 'itr': i,
                            'pehe_train': pehe(ypred1=y_pred_f, ypred0=y_pred_cf, mu1=y_pred_mu1, mu0=y_pred_mu0), 
                            'pehe_test': pehe(ypred1=y_pred_f_test, ypred0=y_pred_cf_test, mu1=y_pred_mu1_test, mu0=y_pred_mu0_test), 
                            'ate_ood': ate_ood, 'pehe_ood':pehe_ood,
@@ -549,7 +573,7 @@ def trainNet(Net, sess, train_step, train_data, val_data, test_data, FLAGS, logf
                 
             if valid_f_error < valid_f_bset:
                 valid_f_bset = valid_f_error
-                valid_f_val = {'best':valid_f_error, 'ate_train': np.mean(y_pred_mu1) - np.mean(y_pred_mu0), 'ate_test': np.mean(y_pred_mu1_test) - np.mean(y_pred_mu0_test), 'itr': i,
+                valid_f_val = {'best':valid_f_error, 'cf_error':cf_error, 'ate_train': np.mean(y_pred_mu1) - np.mean(y_pred_mu0), 'ate_test': np.mean(y_pred_mu1_test) - np.mean(y_pred_mu0_test), 'itr': i,
                            'pehe_train': pehe(ypred1=y_pred_f, ypred0=y_pred_cf, mu1=y_pred_mu1, mu0=y_pred_mu0), 
                            'pehe_test': pehe(ypred1=y_pred_f_test, ypred0=y_pred_cf_test, mu1=y_pred_mu1_test, mu0=y_pred_mu0_test), 
                             'ate_ood': ate_ood, 'pehe_ood':pehe_ood,  
@@ -559,7 +583,18 @@ def trainNet(Net, sess, train_step, train_data, val_data, test_data, FLAGS, logf
 
             if valid_obj < valid_obj_best:
                 valid_obj_best = valid_obj
-                valid_obj_val = {'best':valid_obj, 'ate_train': np.mean(y_pred_mu1) - np.mean(y_pred_mu0), 'ate_test': np.mean(y_pred_mu1_test) - np.mean(y_pred_mu0_test), 'itr': i,
+                valid_obj_val = {'best':valid_obj, 'cf_error':cf_error, 'ate_train': np.mean(y_pred_mu1) - np.mean(y_pred_mu0), 'ate_test': np.mean(y_pred_mu1_test) - np.mean(y_pred_mu0_test), 'itr': i,
+                           'pehe_train': pehe(ypred1=y_pred_f, ypred0=y_pred_cf, mu1=y_pred_mu1, mu0=y_pred_mu0), 
+                           'pehe_test': pehe(ypred1=y_pred_f_test, ypred0=y_pred_cf_test, mu1=y_pred_mu1_test, mu0=y_pred_mu0_test), 
+                           'ate_ood': ate_ood, 'pehe_ood':pehe_ood,
+                           'ate_ood_list': ood_ate_test, 'pehe_ood_list': ood_pehe_test, 
+                           'hat_yf_train': y_pred_f, 'hat_ycf_train': y_pred_cf, 'hat_mu0_train': y_pred_mu0, 'hat_mu1_train': y_pred_mu1, 
+                           'hat_yf_test': y_pred_f_test, 'hat_ycf_test': y_pred_cf_test, 'hat_mu0_test': y_pred_mu0_test, 'hat_mu1_test': y_pred_mu1_test }
+            
+            ood_diff = pehe(ypred1=y_pred_f, ypred0=y_pred_cf, mu1=y_pred_mu1, mu0=y_pred_mu0) - pehe_ood
+            if ood_diff < ood_best:
+                ood_best = ood_diff
+                ood_val = {'best':ood_diff, 'cf_error':cf_error, 'ate_train': np.mean(y_pred_mu1) - np.mean(y_pred_mu0), 'ate_test': np.mean(y_pred_mu1_test) - np.mean(y_pred_mu0_test), 'itr': i,
                            'pehe_train': pehe(ypred1=y_pred_f, ypred0=y_pred_cf, mu1=y_pred_mu1, mu0=y_pred_mu0), 
                            'pehe_test': pehe(ypred1=y_pred_f_test, ypred0=y_pred_cf_test, mu1=y_pred_mu1_test, mu0=y_pred_mu0_test), 
                            'ate_ood': ate_ood, 'pehe_ood':pehe_ood,
@@ -591,23 +626,13 @@ def trainNet(Net, sess, train_step, train_data, val_data, test_data, FLAGS, logf
                 'pehe_ood':pehe_ood
             },i)
 
+
             log(logfile, loss_str)
             log(_logfile, loss_str, False)
         
-    return train_obj_val, train_f_val, valid_obj_val, valid_f_val, final
-
-class TrainStep:
-    def __init__(self):
-        self.l1 = tf.placeholder(tf.float32, name='l1')
-        self.l2 = tf.placeholder(tf.float32, name='l2')
-        self.tot = self.l1 + self.l2
-
-    def get_train_op(self, opt, global_step=None):
-        train_op = opt.minimize(self.tot, global_step=global_step)
-        return train_op
+    return train_obj_val, train_f_val, valid_obj_val, valid_f_val, ood_val, final
 
 def run(exp, args, dataDir, resultDir, train, val, test, device):
-    
 
     tf.reset_default_graph()
     random.seed(args.seed)
@@ -626,10 +651,43 @@ def run(exp, args, dataDir, resultDir, train, val, test, device):
     FLAGS.reweight_sample = 0
     FLAGS.p_alpha = alpha
     FLAGS.p_lambda = lamda
-    FLAGS.iterations = args.iter
+    FLAGS.iterations = args.iterations
     FLAGS.output_delay = 100
     FLAGS.lrate= args.lrate
     FLAGS.oodtestall = args.oodtestall
+    FLAGS.ood = args.ood
+    FLAGS.ood_test = args.ood_test
+    FLAGS.version = args.version
+    FLAGS.ivreg = args.ivreg
+    # About data setting ~~~~
+    FLAGS.num= args.num
+    FLAGS.num_reps = args.num_reps
+    FLAGS.start_reps = args.start_reps
+    FLAGS.mV = args.mV
+    FLAGS.mX = args.mX
+    FLAGS.mU = args.mU
+    FLAGS.mXs = args.mXs
+    # About Regression_t
+    FLAGS.regt_batch_size = args.regt_batch_size
+    FLAGS.regt_lr = args.regt_lr
+    FLAGS.regt_num_epoch = args.regt_num_epoch
+
+
+    for key, value in vars(args).items():
+        # exec(f'FLAGS.{key} = args.{key}')
+        if key in dir(FLAGS):
+            # setattr(FLAGS, key, value)
+            print('done')
+            exec(f'FLAGS.{key} = args.{key}')
+
+    # print(dir(FLAGS))
+        # exec(f'FLAGS.{key} = args.{key}')
+        # if key in vars(FLAGS).keys():
+        #     # setattr(FLAGS, key, value)
+        #     print('done')
+        #     exec(f'FLAGS.{key} = args.{key}')
+            
+    save_config(resultDir+'config.txt')
 
     if args.syn_twoStage:
         FLAGS.twoStage = 1
@@ -656,16 +714,24 @@ def run(exp, args, dataDir, resultDir, train, val, test, device):
             val_df = pd.read_csv(dataDir + f'{exp}/ood_{brdc[r]}/val.csv')
             args.data_dict[r]['train'] = CausalDataset(train_df, variables = ['u','x','v','xs','z','p','s','m','t','g','y','f','c'], observe_vars=['v','x','xs'])
             args.data_dict[r]['val'] = CausalDataset(val_df, variables = ['u','x','v','xs','z','p','s','m','t','g','y','f','c'], observe_vars=['v','x','xs'])
-            
 
     # 初始化ood数据
+    ''' OOD test'''
+    br = [-3.0, -2.5, -2.0, -1.5, -1.3, 1.3, 1.5, 2.0, 2.5, 3.0]
+    brdc = {-3.0: 'n30', -2.5:'n25', -2.0:'n20', -1.5:'n15', -1.3:'n13', 1.3:'p13', 1.5:'p15', 2.0:'p20', 2.5:'p25', 3.0:'p30', 0.0:'0'}
     if args.oodtestall == 1:
+        ood_test_dict = {}
+        for r in br:
+            test_df_ood = pd.read_csv(dataDir + f'{exp}/ood_{brdc[r]}/test.csv')
+            test_ood = CausalDataset(test_df_ood, variables = ['u','x','v','xs','z','p','s','m','t','g','y','f','c'], observe_vars=['v','x','xs'])
+            ood_test_dict[r] = test_ood
         test_df_ood = pd.read_csv(dataDir + f'{exp}/ood_{brdc[args.ood_test]}/test.csv')
-        print(dataDir + f'{exp}/ood_{brdc[args.ood_test]}/test.csv')
         test_ood = CausalDataset(test_df_ood, variables = ['u','x','v','xs','z','p','s','m','t','g','y','f','c'], observe_vars=['v','x','xs'])
-
-        run_Reg(exp, args, dataDir, resultDir, train, test_ood) 
-        
+        if args.ivreg == 1:      
+            train, val, test, ood_test_dict = run_Reg(exp, args, dataDir, resultDir, train, val, test, test_ood, device, ood_test_dict)
+        elif args.ivreg == 0:
+            train_, val_, test_, ood_test_dict = run_Reg(exp, args, dataDir, resultDir, train, val, test, test_ood, device, ood_test_dict)
+    
     try:
         train.to_numpy()
         val.to_numpy()
@@ -717,7 +783,6 @@ def run(exp, args, dataDir, resultDir, train, val, test, device):
     do_out = tf.placeholder("float", name='dropout_out')
     p = tf.placeholder("float", name='p_treated')
     dims = [train['x'].shape[1], FLAGS.dim_in, FLAGS.dim_out]
-    print("1")
     Net = CBIV(x, s, t, y_, p, FLAGS, r_alpha, r_lambda, do_in, do_out, dims)
 
     # 2
@@ -730,6 +795,7 @@ def run(exp, args, dataDir, resultDir, train, val, test, device):
     
     # 3
     ''' Set up optimizer '''
+    # 创建一个全局步数变量，用于追踪训练的迭代次数，初始值为0
     global_step = tf.Variable(0, trainable=False)
     lr = tf.train.exponential_decay(FLAGS.lrate, global_step, \
         FLAGS.lrate_decay_num, FLAGS.lrate_decay, staircase=True)
@@ -745,7 +811,7 @@ def run(exp, args, dataDir, resultDir, train, val, test, device):
         opt = tf.train.RMSPropOptimizer(lr, FLAGS.decay)
 
     train_step = opt.minimize(Net.tot_loss,global_step=global_step)
-      
-    train_obj_val, train_f_val, valid_obj_val, valid_f_val, final = trainNet(Net, sess, train_step, train, val, test, FLAGS, logfile, _logfile, exp, dataDir, resultDir, device, args)
-    # train_obj_val, train_f_val, valid_obj_val, valid_f_val, final = trainNet(Net, sess, train, val, test, FLAGS, logfile, _logfile, exp, dataDir, resultDir, device, args)
-    return train_obj_val, train_f_val, valid_obj_val, valid_f_val, final
+    
+    train_obj_val, train_f_val, valid_obj_val, valid_f_val, ood_val, final = trainNet(Net, sess, train_step, train, val, test, FLAGS, logfile, _logfile, exp, dataDir, resultDir, device, args, ood_test_dict)
+    
+    return train_obj_val, train_f_val, valid_obj_val, valid_f_val, ood_val, final

@@ -1,10 +1,13 @@
 import numpy as np
 from scipy.stats import norm
 import matplotlib
+import tensorflow as tf
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import pandas as pd
 from sklearn.model_selection import train_test_split
+
+FLAGS = tf.app.flags.FLAGS
 
 def get_multivariate_normal_params(dep, m, seed=0):
     np.random.seed(seed)
@@ -122,30 +125,35 @@ def correlation_sample(data, r, n, dim_xs):
     mu0 = new_data['mu0']
     mu1 = new_data['mu1']
 
-    # continuous y
-    y0_cont = mu0 + np.random.normal(loc=0., scale=.1, size=n)
-    y1_cont = mu1 + np.random.normal(loc=0., scale=.1, size=n)
+    # # continuous y
+    # y0_cont = mu0 + np.random.normal(loc=0., scale=.1, size=n)
+    # y1_cont = mu1 + np.random.normal(loc=0., scale=.1, size=n)
 
-    yf_cont, ycf_cont = pd.Series(np.zeros(n), dtype=float), pd.Series(np.zeros(n), dtype=float)
-    yf_cont[t>0], yf_cont[t<1] = y1_cont[t>0], y0_cont[t<1]
-    ycf_cont[t>0], ycf_cont[t<1] = y0_cont[t>0], y1_cont[t<1]
+    # yf_cont, ycf_cont = pd.Series(np.zeros(n), dtype=float), pd.Series(np.zeros(n), dtype=float)
+    # yf_cont[t>0], yf_cont[t<1] = y1_cont[t>0], y0_cont[t<1]
+    # ycf_cont[t>0], ycf_cont[t<1] = y0_cont[t>0], y1_cont[t<1]
 
-    new_data['mu0'] = y0_cont
-    new_data['mu1'] = y1_cont
-    new_data['y'] = yf_cont
-    new_data['f'] = ycf_cont
+    # new_data['mu0'] = y0_cont
+    # new_data['mu1'] = y1_cont
+    # new_data['y'] = yf_cont
+    # new_data['f'] = ycf_cont
 
     # binary y
-    # median_0 = np.median(mu0)
-    # median_1 = np.median(mu1)
-    # mu0[mu0 >= median_0] = 1.
-    # mu0[mu0 < median_0] = 0.
-    # mu1[mu1 < median_1] = 0.
-    # mu1[mu1 >= median_1] = 1.
+    median_0 = np.median(mu0)
+    median_1 = np.median(mu1)
+    mu0[mu0 >= median_0] = 1.
+    mu0[mu0 < median_0] = 0.
+    mu1[mu1 < median_1] = 0.
+    mu1[mu1 >= median_1] = 1.
 
-    # yf_bin, ycf_bin = np.zeros(n), np.zeros(n)
-    # yf_bin[t>0], yf_bin[t<1] = mu1[t>0], mu0[t<1]
-    # ycf_bin[t>0], ycf_bin[t<1] = mu0[t>0], mu1[t<1]
+    yf_bin, ycf_bin = np.zeros(n), np.zeros(n)
+    yf_bin[t>0], yf_bin[t<1] = mu1[t>0], mu0[t<1]
+    ycf_bin[t>0], ycf_bin[t<1] = mu0[t>0], mu1[t<1]
+
+    new_data['mu0'] = mu0
+    new_data['mu1'] = mu1
+    new_data['y'] = yf_bin
+    new_data['f'] = ycf_bin
 
     return new_data
 
@@ -166,3 +174,13 @@ def split_data(data):
 
     # 进行后续操作，使用划分后的数据集
     return train_data, val_data, test_data
+
+def save_config(fname):
+    """ Save configuration """
+    flagdict =  {}
+    for k in FLAGS:
+        flagdict[k] = FLAGS[k].value
+    s = '\n'.join(['%s: %s' % (k,str(flagdict[k])) for k in sorted(flagdict.keys())])
+    f = open(fname,'w')
+    f.write(s)
+    f.close()

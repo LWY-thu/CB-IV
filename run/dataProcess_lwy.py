@@ -97,7 +97,7 @@ if __name__ == "__main__":
     # About data setting ~~~~
     argparser.add_argument('--ood_num',default=10000,type=int,help='The num of train\val\test dataset')
     argparser.add_argument('--num',default=10000,type=int,help='The num of train\val\test dataset')
-    argparser.add_argument('--num_reps',default=100,type=int,help='The num of train\val\test dataset')
+    argparser.add_argument('--num_reps',default=20,type=int,help='The num of train\val\test dataset')
     argparser.add_argument('--ate',default=0,type=float,help='The ate of constant')
     argparser.add_argument('--sc',default=1,type=float,help='The sc')
     argparser.add_argument('--sh',default=0,type=float,help='The sh')

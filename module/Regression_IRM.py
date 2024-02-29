@@ -190,7 +190,7 @@ def run(exp, args, dataDir, resultDir, train_env, val_env, test_env, device, r):
     return train,val,test
 
 
-def run_ood_IRM(exp, args, dataDir, resultDir, train, test_ood):
+def run_ood_IRM(exp, args, dataDir, resultDir, train, val, test, test_ood, device, ood_test_dict):
     batch_size = args.regt_batch_size
     lr = args.regt_lr
     num_epoch = args.regt_num_epoch
